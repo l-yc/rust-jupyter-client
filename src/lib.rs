@@ -32,10 +32,29 @@ pub enum Response {
 
 #[derive(Deserialize, Debug)]
 pub struct KernelInfoResponseDetails {
-    content: String,
+    content: KernelInfoContent,
     header: Header,
-    metadata: String,
+    metadata: Metadata,
     parent_header: Header,
+}
+
+#[derive(Deserialize, Debug)]
+struct Metadata {}
+
+#[derive(Deserialize, Debug)]
+struct KernelInfoContent {
+    banner: String,
+    implementation: String,
+    implementation_version: String,
+    protocol_version: String,
+    status: String,
+    help_links: Vec<HelpLink>,
+}
+
+#[derive(Deserialize, Debug)]
+struct HelpLink {
+    text: String,
+    url: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -168,11 +187,21 @@ impl JupyterConnection {
 
         let header_str = String::from_utf8(msg_frames[0].to_vec())?;
         let header: Header = serde_json::from_str(&header_str)?;
+
+        let parent_header_str = String::from_utf8(msg_frames[1].to_vec())?;
+        let parent_header: Header = serde_json::from_str(&parent_header_str)?;
+
+        let metadata_str = String::from_utf8(msg_frames[2].to_vec())?;
+        let metadata: Metadata = serde_json::from_str(&metadata_str)?;
+
+        let content_str = String::from_utf8(msg_frames[3].to_vec())?;
+        let content: KernelInfoContent = serde_json::from_str(&content_str)?;
+
         Ok(Response::KernelInfoResponse(KernelInfoResponseDetails {
-            header: header.clone(),
-            content: "".to_string(),
-            metadata: "".to_string(),
-            parent_header: header,
+            header,
+            content,
+            metadata,
+            parent_header,
         }))
     }
 }
