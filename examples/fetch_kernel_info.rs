@@ -9,5 +9,5 @@ fn main() {
     let mut connection = jupyter_client::JupyterConnection::with_connection_file(filename)
         .expect("creating jupyter connection");
     let info = connection.get_kernel_info().expect("fetching kernel info");
-    println!("{:?}", info);
+    println!("Result: {:?}", info);
 }

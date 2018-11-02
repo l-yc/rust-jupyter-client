@@ -25,8 +25,17 @@ pub enum Request {
     KernelInfoRequest,
 }
 
+#[derive(Debug)]
 pub enum Response {
-    KernelInfoResponse,
+    KernelInfoResponse(KernelInfoResponseDetails),
+}
+
+#[derive(Deserialize, Debug)]
+pub struct KernelInfoResponseDetails {
+    content: String,
+    header: Header,
+    metadata: String,
+    parent_header: Header,
 }
 
 #[derive(Deserialize, Debug)]
@@ -43,7 +52,7 @@ pub struct ConnectionConfig {
     pub kernel_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct Header {
     date: String,
     msg_id: String,
@@ -108,9 +117,8 @@ impl JupyterConnection {
         })
     }
 
-    pub fn get_kernel_info(&mut self) -> Result<()> {
-        self.send(Request::KernelInfoRequest)?;
-        Ok(())
+    pub fn get_kernel_info(&mut self) -> Result<Response> {
+        self.send(Request::KernelInfoRequest)
     }
 
     fn send(&mut self, request: Request) -> Result<Response> {
@@ -132,15 +140,11 @@ impl JupyterConnection {
 
                 debug_message(&msg_list);
                 self.socket.send_multipart(msg_list.as_slice(), 0)?;
-                let response = self.socket.recv_multipart(0)?;
-
-                for chunk in &response {
-                    let text = String::from_utf8_lossy(chunk.as_slice());
-                    trace!("{}", text);
-                }
+                let raw_response = self.socket.recv_multipart(0)?;
+                let deserialized = self.deserialize_wire_message(raw_response)?;
+                Ok(deserialized)
             }
         }
-        Ok(Response::KernelInfoResponse)
     }
 
     fn sign(&mut self, msg_list: &[&[u8]]) -> String {
@@ -152,6 +156,24 @@ impl JupyterConnection {
         let code = result.code();
         let encoded = hex::encode(code);
         encoded
+    }
+
+    fn deserialize_wire_message(&self, raw_response: Vec<Vec<u8>>) -> Result<Response> {
+        let delim_idx = raw_response
+            .iter()
+            .position(|r| String::from_utf8(r.to_vec()).unwrap() == "<IDS|MSG>")
+            .ok_or_else(|| format!("cannot find delimiter in response"))?;
+        let signature = &raw_response[delim_idx + 1];
+        let msg_frames = &raw_response[delim_idx + 2..];
+
+        let header_str = String::from_utf8(msg_frames[0].to_vec())?;
+        let header: Header = serde_json::from_str(&header_str)?;
+        Ok(Response::KernelInfoResponse(KernelInfoResponseDetails {
+            header: header.clone(),
+            content: "".to_string(),
+            metadata: "".to_string(),
+            parent_header: header,
+        }))
     }
 }
 
