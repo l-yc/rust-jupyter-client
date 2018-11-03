@@ -14,6 +14,9 @@ use sha2::Sha256;
 use std::error::Error;
 use std::fs::File;
 use std::path::Path;
+use std::sync::mpsc::{self, Receiver};
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 type Result<T> = ::std::result::Result<T, Box<dyn Error>>;
 
@@ -28,6 +31,7 @@ pub enum Request {
 #[derive(Debug)]
 pub enum Response {
     KernelInfoResponse(KernelInfoResponseDetails),
+    StatusResponse(StatusResponseDetails),
 }
 
 #[derive(Deserialize, Debug)]
@@ -39,16 +43,31 @@ pub struct KernelInfoResponseDetails {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct StatusResponseDetails {
+    content: StatusContent,
+    header: Header,
+    metadata: Metadata,
+    parent_header: Header,
+}
+
+#[derive(Deserialize, Debug)]
 struct Metadata {}
 
 #[derive(Deserialize, Debug)]
 struct KernelInfoContent {
+    #[serde(default)]
     banner: String,
     implementation: String,
     implementation_version: String,
     protocol_version: String,
     status: String,
     help_links: Vec<HelpLink>,
+}
+
+#[derive(Deserialize, Debug)]
+struct StatusContent {
+    // TODO: make this an enum
+    execution_state: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -108,9 +127,9 @@ where
 }
 
 pub struct JupyterConnection {
-    socket: zmq::Socket,
-    context: zmq::Context,
-    key: String,
+    shell_socket: zmq::Socket,
+    iopub_socket: Arc<Mutex<zmq::Socket>>,
+    _context: zmq::Context,
     auth: HmacSha256,
 }
 
@@ -125,19 +144,44 @@ impl JupyterConnection {
             .map_err(|e| format!("Error creating auth source {:?}", e))?;
 
         let ctx = zmq::Context::new();
-        let mut socket = ctx.socket(zmq::REQ)?;
-        socket.connect(&format!("tcp://localhost:{port}", port = config.shell_port))?;
+
+        // Set up the sockets
+        trace!("shell port: {}", config.shell_port);
+        let shell_socket = ctx.socket(zmq::REQ)?;
+        shell_socket.connect(&format!("tcp://localhost:{port}", port = config.shell_port))?;
+
+        // Set up iopub socket
+        trace!("iopub port: {}", config.iopub_port);
+        let iopub_socket = ctx.socket(zmq::SUB)?;
+        iopub_socket.connect(&format!("tcp://localhost:{port}", port = config.iopub_port))?;
+        iopub_socket.set_subscribe("".as_bytes())?;
 
         Ok(JupyterConnection {
-            socket: socket,
-            context: ctx,
-            key: config.key,
+            shell_socket,
+            iopub_socket: Arc::new(Mutex::new(iopub_socket)),
+            _context: ctx,
             auth: auth,
         })
     }
 
     pub fn get_kernel_info(&mut self) -> Result<Response> {
         self.send(Request::KernelInfoRequest)
+    }
+
+    pub fn subscribe_to_iopub(&mut self) -> Result<Receiver<Response>> {
+        let (tx, rx) = mpsc::channel();
+        let socket = self.iopub_socket.clone();
+        let auth = self.auth.clone();
+        thread::spawn(move || loop {
+            let msg = {
+                let socket = socket.lock().unwrap();
+                let msg = socket.recv_multipart(0).unwrap();
+                msg
+            };
+            let response = deserialize_wire_message(msg, &auth).unwrap();
+            tx.send(response).unwrap();
+        });
+        Ok(rx)
     }
 
     fn send(&mut self, request: Request) -> Result<Response> {
@@ -158,9 +202,9 @@ impl JupyterConnection {
                 msg_list.push(raw_msg_list[3]);
 
                 debug_message(&msg_list);
-                self.socket.send_multipart(msg_list.as_slice(), 0)?;
-                let raw_response = self.socket.recv_multipart(0)?;
-                let deserialized = self.deserialize_wire_message(raw_response)?;
+                self.shell_socket.send_multipart(msg_list.as_slice(), 0)?;
+                let raw_response = self.shell_socket.recv_multipart(0)?;
+                let deserialized = deserialize_wire_message(raw_response, &self.auth)?;
                 Ok(deserialized)
             }
         }
@@ -176,34 +220,55 @@ impl JupyterConnection {
         let encoded = hex::encode(code);
         encoded
     }
+}
 
-    fn deserialize_wire_message(&self, raw_response: Vec<Vec<u8>>) -> Result<Response> {
-        let delim_idx = raw_response
-            .iter()
-            .position(|r| String::from_utf8(r.to_vec()).unwrap() == "<IDS|MSG>")
-            .ok_or_else(|| format!("cannot find delimiter in response"))?;
-        let signature = &raw_response[delim_idx + 1];
-        let msg_frames = &raw_response[delim_idx + 2..];
+fn deserialize_wire_message(raw_response: Vec<Vec<u8>>, _auth: &HmacSha256) -> Result<Response> {
+    let delim_idx = raw_response
+        .iter()
+        .position(|r| String::from_utf8(r.to_vec()).unwrap() == "<IDS|MSG>")
+        .ok_or_else(|| format!("cannot find delimiter in response"))?;
+    let signature = &raw_response[delim_idx + 1];
+    trace!("signature: {:?}", signature);
+    // TODO: validate signature
+    let msg_frames = &raw_response[delim_idx + 2..];
 
-        let header_str = String::from_utf8(msg_frames[0].to_vec())?;
-        let header: Header = serde_json::from_str(&header_str)?;
+    let header_str = String::from_utf8(msg_frames[0].to_vec())?;
+    let header: Header = serde_json::from_str(&header_str)?;
+    trace!("header: {:?}", header);
 
-        let parent_header_str = String::from_utf8(msg_frames[1].to_vec())?;
-        let parent_header: Header = serde_json::from_str(&parent_header_str)?;
+    let parent_header_str = String::from_utf8(msg_frames[1].to_vec())?;
+    let parent_header: Header = serde_json::from_str(&parent_header_str)?;
+    trace!("parent header: {:?}", parent_header);
 
-        let metadata_str = String::from_utf8(msg_frames[2].to_vec())?;
-        let metadata: Metadata = serde_json::from_str(&metadata_str)?;
+    let metadata_str = String::from_utf8(msg_frames[2].to_vec())?;
+    let metadata: Metadata = serde_json::from_str(&metadata_str)?;
+    trace!("metadata: {:?}", metadata);
 
-        let content_str = String::from_utf8(msg_frames[3].to_vec())?;
-        let content: KernelInfoContent = serde_json::from_str(&content_str)?;
+    let content_str = String::from_utf8(msg_frames[3].to_vec())?;
+    trace!("content str: {}", content_str);
+    let response = match header.msg_type.as_str() {
+        "status" => {
+            let content: StatusContent = serde_json::from_str(&content_str)?;
+            Response::StatusResponse(StatusResponseDetails {
+                header,
+                content,
+                metadata,
+                parent_header,
+            })
+        }
+        "kernel_info_reply" => {
+            let content: KernelInfoContent = serde_json::from_str(&content_str)?;
+            Response::KernelInfoResponse(KernelInfoResponseDetails {
+                header,
+                content,
+                metadata,
+                parent_header,
+            })
+        }
+        _ => unimplemented!(),
+    };
 
-        Ok(Response::KernelInfoResponse(KernelInfoResponseDetails {
-            header,
-            content,
-            metadata,
-            parent_header,
-        }))
-    }
+    Ok(response)
 }
 
 #[inline(always)]
