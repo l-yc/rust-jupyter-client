@@ -28,6 +28,46 @@ pub enum Request {
     KernelInfoRequest,
 }
 
+trait SignComputable {
+    fn signature(&self, auth: HmacSha256) -> String;
+}
+
+impl SignComputable for Vec<Vec<u8>> {
+    fn signature(&self, mut auth: HmacSha256) -> String {
+        for msg in self {
+            auth.input(msg);
+        }
+        let result = auth.result();
+        let code = result.code();
+        let encoded = hex::encode(code);
+        encoded
+    }
+}
+
+impl SignComputable for &[&[u8]] {
+    fn signature(&self, mut auth: HmacSha256) -> String {
+        for msg in *self {
+            auth.input(msg);
+        }
+        let result = auth.result();
+        let code = result.code();
+        let encoded = hex::encode(code);
+        encoded
+    }
+}
+
+impl SignComputable for &[Vec<u8>] {
+    fn signature(&self, mut auth: HmacSha256) -> String {
+        for msg in *self {
+            auth.input(msg);
+        }
+        let result = auth.result();
+        let code = result.code();
+        let encoded = hex::encode(code);
+        encoded
+    }
+}
+
 #[derive(Debug)]
 pub enum Response {
     KernelInfoResponse(KernelInfoResponseDetails),
@@ -178,7 +218,8 @@ impl JupyterConnection {
                 let msg = socket.recv_multipart(0).unwrap();
                 msg
             };
-            let response = deserialize_wire_message(msg, &auth).unwrap();
+            let auth = auth.clone();
+            let response = deserialize_wire_message(msg, auth).unwrap();
             tx.send(response).unwrap();
         });
         Ok(rx)
@@ -190,7 +231,9 @@ impl JupyterConnection {
                 let header = new_header("kernel_info_request");
                 let header_bytes = header.to_bytes()?;
                 let raw_msg_list = vec![header_bytes.as_slice(), b"{}", b"{}", b"{}"];
-                let signature = self.sign(raw_msg_list.as_slice());
+
+                let auth = self.auth.clone();
+                let signature = sign(raw_msg_list.as_slice(), auth);
                 let sig_bytes = signature.into_bytes();
 
                 let mut msg_list = Vec::with_capacity(6);
@@ -204,33 +247,36 @@ impl JupyterConnection {
                 debug_message(&msg_list);
                 self.shell_socket.send_multipart(msg_list.as_slice(), 0)?;
                 let raw_response = self.shell_socket.recv_multipart(0)?;
-                let deserialized = deserialize_wire_message(raw_response, &self.auth)?;
+                let auth = self.auth.clone();
+                let deserialized = deserialize_wire_message(raw_response, auth)?;
                 Ok(deserialized)
             }
         }
     }
-
-    fn sign(&mut self, msg_list: &[&[u8]]) -> String {
-        let mut auth = self.auth.clone();
-        for msg in msg_list {
-            auth.input(msg);
-        }
-        let result = auth.result();
-        let code = result.code();
-        let encoded = hex::encode(code);
-        encoded
-    }
 }
 
-fn deserialize_wire_message(raw_response: Vec<Vec<u8>>, _auth: &HmacSha256) -> Result<Response> {
+fn sign<S>(msg_list: S, auth: HmacSha256) -> String
+where
+    S: SignComputable,
+{
+    msg_list.signature(auth)
+}
+
+fn deserialize_wire_message(raw_response: Vec<Vec<u8>>, auth: HmacSha256) -> Result<Response> {
     let delim_idx = raw_response
         .iter()
         .position(|r| String::from_utf8(r.to_vec()).unwrap() == "<IDS|MSG>")
         .ok_or_else(|| format!("cannot find delimiter in response"))?;
     let signature = &raw_response[delim_idx + 1];
+    let signature = String::from_utf8_lossy(signature);
     trace!("signature: {:?}", signature);
-    // TODO: validate signature
+
     let msg_frames = &raw_response[delim_idx + 2..];
+
+    let check_sig = sign(msg_frames, auth);
+    if check_sig != signature {
+        return Err(From::from("invalid signature"));
+    }
 
     let header_str = String::from_utf8(msg_frames[0].to_vec())?;
     let header: Header = serde_json::from_str(&header_str)?;
