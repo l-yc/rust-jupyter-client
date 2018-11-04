@@ -205,7 +205,7 @@ impl JupyterConnection {
     }
 
     pub fn get_kernel_info(&mut self) -> Result<Response> {
-        self.send(Request::KernelInfoRequest)
+        self.shell_send(Request::KernelInfoRequest)
     }
 
     pub fn subscribe_to_iopub(&mut self) -> Result<Receiver<Response>> {
@@ -225,7 +225,7 @@ impl JupyterConnection {
         Ok(rx)
     }
 
-    fn send(&mut self, request: Request) -> Result<Response> {
+    fn shell_send(&mut self, request: Request) -> Result<Response> {
         match request {
             Request::KernelInfoRequest => {
                 let header = new_header("kernel_info_request");
