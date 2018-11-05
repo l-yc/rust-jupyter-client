@@ -5,7 +5,6 @@ import zmq
 import json
 import hmac
 import hashlib
-from jupyter_client.session import Session
 import sys
 import datetime
 import uuid
@@ -28,12 +27,12 @@ def str_to_bytes(s):
 
 def new_header(msg_type):
     return {
-        "date": datetime.datetime.now().isoformat(),
+        # "date": datetime.datetime.now().isoformat(),
         "msg_id": msg_id(),
-        "username": "kernel",
-        "session": engine_id,
+        # "username": "kernel",
+        # "session": engine_id,
         "msg_type": msg_type,
-        "version": "5.0",
+        # "version": "5.0",
     }
 
 
@@ -41,7 +40,6 @@ def new_header(msg_type):
 
 class Frontend(object):
 
-    session = Session(debug=True)
     context = zmq.Context()
 
     def __init__(self, filename):
