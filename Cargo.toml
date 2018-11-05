@@ -2,7 +2,6 @@
 name = "jupyter_client"
 version = "0.1.0"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
-edition = "2018"
 
 [dependencies]
 zmq = "0.8.2"
