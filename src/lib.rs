@@ -44,7 +44,7 @@ impl SignComputable for Vec<Vec<u8>> {
     }
 }
 
-impl SignComputable for &[&[u8]] {
+impl<'a> SignComputable for &'a [&'a [u8]] {
     fn signature(&self, mut auth: HmacSha256) -> String {
         for msg in *self {
             auth.input(msg);
@@ -56,7 +56,7 @@ impl SignComputable for &[&[u8]] {
     }
 }
 
-impl SignComputable for &[Vec<u8>] {
+impl<'a> SignComputable for &'a [Vec<u8>] {
     fn signature(&self, mut auth: HmacSha256) -> String {
         for msg in *self {
             auth.input(msg);
