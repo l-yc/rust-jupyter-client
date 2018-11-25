@@ -17,3 +17,4 @@ mod socket;
 mod wire;
 
 pub use client::Client;
+pub use commands::Command;
