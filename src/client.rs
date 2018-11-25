@@ -50,6 +50,6 @@ impl Client {
         self.shell_socket.send_wire(wire)?;
 
         let resp_wire = self.shell_socket.recv_wire()?;
-        Ok(resp_wire.into_response(self.auth.clone())?)
+        Ok(resp_wire.into_response()?)
     }
 }

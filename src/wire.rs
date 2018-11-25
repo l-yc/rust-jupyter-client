@@ -11,10 +11,11 @@ pub(crate) struct WireMessage {
     pub(crate) parent_header: Part,
     pub(crate) metadata: Part,
     pub(crate) content: Part,
+    pub(crate) auth: HmacSha256,
 }
 
 impl WireMessage {
-    pub(crate) fn into_response(self, _auth: HmacSha256) -> Result<Response> {
+    pub(crate) fn into_response(self) -> Result<Response> {
         unimplemented!()
     }
 }

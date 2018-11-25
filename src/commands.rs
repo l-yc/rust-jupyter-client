@@ -8,7 +8,7 @@ pub enum Command {
 }
 
 impl Command {
-    pub(crate) fn into_wire(self, _auth: HmacSha256) -> Result<WireMessage> {
+    pub(crate) fn into_wire(self, auth: HmacSha256) -> Result<WireMessage> {
         match self {
             Command::KernelInfo => {
                 let header = Header::new("kernel_info");
@@ -18,6 +18,7 @@ impl Command {
                     parent_header: b"{}".to_vec(),
                     metadata: b"{}".to_vec(),
                     content: b"{}".to_vec(),
+                    auth,
                 })
             }
         }
