@@ -9,85 +9,30 @@ extern crate zmq;
 extern crate serde_derive;
 extern crate hex;
 
-use hmac::{Hmac, Mac};
-use sha2::Sha256;
-use std::error::Error;
+mod client;
+mod command;
+mod connection_config;
+mod errors;
+mod response;
+mod signatures;
+mod socket;
+
+use connection_config::ConnectionConfig;
+use errors::Result;
+use hmac::Mac;
+use response::Response;
+use signatures::{sign, HmacSha256};
+use socket::Socket;
 use std::fs::File;
 use std::path::Path;
 use std::sync::mpsc::{self, Receiver};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-type Result<T> = ::std::result::Result<T, Box<dyn Error>>;
-
-type HmacSha256 = Hmac<Sha256>;
-
 static DELIMITER: &[u8] = b"<IDS|MSG>";
 
 pub enum Request {
     KernelInfoRequest,
-}
-
-trait SignComputable {
-    fn signature(&self, auth: HmacSha256) -> String;
-}
-
-impl SignComputable for Vec<Vec<u8>> {
-    fn signature(&self, mut auth: HmacSha256) -> String {
-        for msg in self {
-            auth.input(msg);
-        }
-        let result = auth.result();
-        let code = result.code();
-        let encoded = hex::encode(code);
-        encoded
-    }
-}
-
-impl<'a> SignComputable for &'a [&'a [u8]] {
-    fn signature(&self, mut auth: HmacSha256) -> String {
-        for msg in *self {
-            auth.input(msg);
-        }
-        let result = auth.result();
-        let code = result.code();
-        let encoded = hex::encode(code);
-        encoded
-    }
-}
-
-impl<'a> SignComputable for &'a [Vec<u8>] {
-    fn signature(&self, mut auth: HmacSha256) -> String {
-        for msg in *self {
-            auth.input(msg);
-        }
-        let result = auth.result();
-        let code = result.code();
-        let encoded = hex::encode(code);
-        encoded
-    }
-}
-
-#[derive(Debug)]
-pub enum Response {
-    KernelInfoResponse(KernelInfoResponseDetails),
-    StatusResponse(StatusResponseDetails),
-}
-
-#[derive(Deserialize, Debug)]
-pub struct KernelInfoResponseDetails {
-    content: KernelInfoContent,
-    header: Header,
-    metadata: Metadata,
-    parent_header: Header,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct StatusResponseDetails {
-    content: StatusContent,
-    header: Header,
-    metadata: Metadata,
-    parent_header: Header,
 }
 
 #[derive(Deserialize, Debug)]
@@ -114,20 +59,6 @@ struct StatusContent {
 struct HelpLink {
     text: String,
     url: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ConnectionConfig {
-    pub shell_port: u32,
-    pub iopub_port: u32,
-    pub stdin_port: u32,
-    pub control_port: u32,
-    pub hb_port: u32,
-    pub ip: String,
-    pub key: String,
-    pub transport: String,
-    pub signature_scheme: String,
-    pub kernel_name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -167,9 +98,8 @@ where
 }
 
 pub struct JupyterConnection {
-    shell_socket: zmq::Socket,
-    iopub_socket: Arc<Mutex<zmq::Socket>>,
-    _context: zmq::Context,
+    shell_socket: Socket,
+    iopub_socket: Arc<Mutex<Socket>>,
     auth: HmacSha256,
 }
 
@@ -179,7 +109,7 @@ impl JupyterConnection {
         P: AsRef<Path>,
     {
         let file = File::open(path)?;
-        let config: ConnectionConfig = serde_json::from_reader(file)?;
+        let config = ConnectionConfig::from_reader(&file)?;
         let auth = HmacSha256::new_varkey(config.key.as_bytes())
             .map_err(|e| format!("Error creating auth source {:?}", e))?;
 
@@ -197,9 +127,8 @@ impl JupyterConnection {
         iopub_socket.set_subscribe("".as_bytes())?;
 
         Ok(JupyterConnection {
-            shell_socket,
-            iopub_socket: Arc::new(Mutex::new(iopub_socket)),
-            _context: ctx,
+            shell_socket: Socket(shell_socket),
+            iopub_socket: Arc::new(Mutex::new(Socket(iopub_socket))),
             auth: auth,
         })
     }
@@ -253,13 +182,6 @@ impl JupyterConnection {
             }
         }
     }
-}
-
-fn sign<S>(msg_list: S, auth: HmacSha256) -> String
-where
-    S: SignComputable,
-{
-    msg_list.signature(auth)
 }
 
 fn deserialize_wire_message(raw_response: Vec<Vec<u8>>, auth: HmacSha256) -> Result<Response> {
