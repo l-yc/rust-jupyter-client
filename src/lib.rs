@@ -5,12 +5,14 @@ extern crate log;
 extern crate serde;
 extern crate serde_derive;
 extern crate sha2;
+extern crate uuid;
 extern crate zmq;
 
 mod client;
 mod commands;
 mod connection_config;
 mod errors;
+mod header;
 mod responses;
 mod signatures;
 mod socket;
