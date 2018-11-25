@@ -69,6 +69,10 @@ mod tests {
     fn test_signing() {
         let auth = HmacSha256::new_varkey(b"foobar").unwrap();
         let data = vec![&b"a"[..], b"b"];
-        let _signature = sign(data, auth);
+        let signature = sign(data, auth);
+        assert_eq!(
+            signature,
+            "77d67cc5dee7cc59a379f373432c9eb6d4183225f384ee84494cad997fd22c2a"
+        );
     }
 }
