@@ -49,7 +49,7 @@ impl Client {
         let wire = command.into_wire(self.auth.clone())?;
         self.shell_socket.send_wire(wire)?;
 
-        let resp_wire = self.shell_socket.recv_wire()?;
+        let resp_wire = self.shell_socket.recv_wire(self.auth.clone())?;
         Ok(resp_wire.into_response()?)
     }
 }

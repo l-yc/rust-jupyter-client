@@ -1,6 +1,6 @@
 use errors::Result;
 use header::Header;
-use signatures::HmacSha256;
+use hmac::Mac;
 use wire::WireMessage;
 
 pub enum Command {
@@ -8,7 +8,7 @@ pub enum Command {
 }
 
 impl Command {
-    pub(crate) fn into_wire(self, auth: HmacSha256) -> Result<WireMessage> {
+    pub(crate) fn into_wire<M: Mac>(self, auth: M) -> Result<WireMessage<M>> {
         match self {
             Command::KernelInfo => {
                 let header = Header::new("kernel_info");
@@ -28,6 +28,7 @@ impl Command {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::signatures::HmacSha256;
     use hmac::Mac;
 
     #[test]

@@ -8,6 +8,13 @@ extern crate sha2;
 extern crate uuid;
 extern crate zmq;
 
+#[cfg(test)]
+extern crate crypto_mac;
+#[cfg(test)]
+extern crate digest;
+#[cfg(test)]
+extern crate generic_array;
+
 mod client;
 mod commands;
 mod connection_config;
