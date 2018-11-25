@@ -61,7 +61,7 @@ mod tests {
         }
     }
 
-    fn expected_signature<'a>() -> String {
+    fn expected_signature() -> String {
         let auth = FakeAuth::create();
         let res = auth.result();
         let code = res.code();
@@ -70,10 +70,14 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_kernel_info_into_packets() {
         let cmd = Command::KernelInfo;
         let auth = FakeAuth::create();
         let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
         let packets = wire.into_packets().expect("creating packets");
+        assert_eq!(packets[0], DELIMITER);
+        assert_eq!(packets[1], expected_signature().as_bytes());
+        // TODO: check the rest
     }
 }
