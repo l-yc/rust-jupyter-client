@@ -8,7 +8,9 @@ pub enum Command {
 
 impl Command {
     pub(crate) fn into_wire(self, _auth: HmacSha256) -> Result<WireMessage> {
-        unimplemented!()
+        match self {
+            Command::KernelInfo => unimplemented!("KernelInfo => WireMessage"),
+        }
     }
 }
 
