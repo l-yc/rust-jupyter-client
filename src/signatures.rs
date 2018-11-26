@@ -4,11 +4,16 @@ use sha2::Sha256;
 pub(crate) type HmacSha256 = Hmac<Sha256>;
 
 pub(crate) trait SignComputable {
-    fn signature(&self, auth: HmacSha256) -> String;
+    fn signature<M>(&self, auth: M) -> String
+    where
+        M: Mac;
 }
 
 impl SignComputable for Vec<Vec<u8>> {
-    fn signature(&self, mut auth: HmacSha256) -> String {
+    fn signature<M>(&self, mut auth: M) -> String
+    where
+        M: Mac,
+    {
         for msg in self {
             auth.input(msg);
         }
@@ -20,7 +25,10 @@ impl SignComputable for Vec<Vec<u8>> {
 }
 
 impl<'a> SignComputable for Vec<&'a [u8]> {
-    fn signature(&self, mut auth: HmacSha256) -> String {
+    fn signature<M>(&self, mut auth: M) -> String
+    where
+        M: Mac,
+    {
         for msg in self {
             auth.input(msg);
         }
@@ -31,7 +39,10 @@ impl<'a> SignComputable for Vec<&'a [u8]> {
     }
 }
 impl<'a> SignComputable for &'a [&'a [u8]] {
-    fn signature(&self, mut auth: HmacSha256) -> String {
+    fn signature<M>(&self, mut auth: M) -> String
+    where
+        M: Mac,
+    {
         for msg in *self {
             auth.input(msg);
         }
@@ -43,7 +54,10 @@ impl<'a> SignComputable for &'a [&'a [u8]] {
 }
 
 impl<'a> SignComputable for &'a [Vec<u8>] {
-    fn signature(&self, mut auth: HmacSha256) -> String {
+    fn signature<M>(&self, mut auth: M) -> String
+    where
+        M: Mac,
+    {
         for msg in *self {
             auth.input(msg);
         }
@@ -54,9 +68,10 @@ impl<'a> SignComputable for &'a [Vec<u8>] {
     }
 }
 
-pub(crate) fn sign<S>(msg_list: S, auth: HmacSha256) -> String
+pub(crate) fn sign<S, M>(msg_list: S, auth: M) -> String
 where
     S: SignComputable,
+    M: Mac,
 {
     msg_list.signature(auth)
 }

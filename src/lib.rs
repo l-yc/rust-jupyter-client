@@ -5,6 +5,7 @@ extern crate log;
 extern crate serde;
 extern crate serde_derive;
 extern crate sha2;
+extern crate slice_deque;
 extern crate uuid;
 extern crate zmq;
 

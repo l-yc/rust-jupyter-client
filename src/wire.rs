@@ -1,6 +1,8 @@
 use errors::Result;
 use hmac::Mac;
 use responses::Response;
+use signatures::sign;
+use slice_deque::SliceDeque;
 
 type Part = Vec<u8>;
 
@@ -19,8 +21,18 @@ impl<M: Mac> WireMessage<M> {
         unimplemented!()
     }
 
-    pub(crate) fn into_packets(self) -> Result<Vec<Part>> {
-        Ok(Vec::new())
+    pub(crate) fn into_packets(self) -> Result<SliceDeque<Part>> {
+        let mut result = SliceDeque::new();
+
+        // Start by adding the items that need a signature
+        result.push_back(self.header);
+        result.push_back(self.parent_header);
+        result.push_back(self.metadata);
+        result.push_back(self.content);
+
+        let signature = sign(result.as_slice(), self.auth.clone());
+        result.push_front(signature.into_bytes());
+        Ok(result)
     }
 }
 
