@@ -32,6 +32,7 @@ impl<M: Mac> WireMessage<M> {
 
         let signature = sign(result.as_slice(), self.auth.clone());
         result.push_front(signature.into_bytes());
+        result.push_front(DELIMITER.to_vec());
         Ok(result)
     }
 }
@@ -82,7 +83,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_kernel_info_into_packets() {
         let cmd = Command::KernelInfo;
         let auth = FakeAuth::create();
