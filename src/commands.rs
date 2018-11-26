@@ -11,7 +11,7 @@ impl Command {
     pub(crate) fn into_wire<M: Mac>(self, auth: M) -> Result<WireMessage<M>> {
         match self {
             Command::KernelInfo => {
-                let header = Header::new("kernel_info");
+                let header = Header::new("kernel_info_request");
                 let header_bytes = header.to_bytes()?;
                 Ok(WireMessage {
                     header: header_bytes.to_vec(),

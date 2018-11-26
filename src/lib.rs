@@ -21,6 +21,7 @@ mod commands;
 mod connection_config;
 mod errors;
 mod header;
+mod metadata;
 mod responses;
 mod signatures;
 mod socket;

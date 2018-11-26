@@ -2,17 +2,17 @@ use errors::Result;
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub(crate) struct Header {
-    pub(crate) date: String,
-    pub(crate) msg_id: String,
-    pub(crate) username: String,
-    pub(crate) session: String,
-    pub(crate) msg_type: String,
-    pub(crate) version: String,
+pub struct Header {
+    pub date: String,
+    pub msg_id: String,
+    pub username: String,
+    pub session: String,
+    pub msg_type: String,
+    pub version: String,
 }
 
 impl Header {
-    pub(crate) fn new<S>(msg_type: S) -> Header
+    pub fn new<S>(msg_type: S) -> Header
     where
         S: Into<String>,
     {
