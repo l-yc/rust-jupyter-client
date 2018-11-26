@@ -3,12 +3,12 @@ use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct Header {
-    date: String,
-    msg_id: String,
-    username: String,
-    session: String,
-    msg_type: String,
-    version: String,
+    pub(crate) date: String,
+    pub(crate) msg_id: String,
+    pub(crate) username: String,
+    pub(crate) session: String,
+    pub(crate) msg_type: String,
+    pub(crate) version: String,
 }
 
 impl Header {

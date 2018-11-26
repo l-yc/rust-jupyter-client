@@ -4,6 +4,7 @@ extern crate hmac;
 extern crate log;
 extern crate serde;
 extern crate serde_derive;
+extern crate serde_json;
 extern crate sha2;
 extern crate uuid;
 extern crate zmq;

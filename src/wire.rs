@@ -93,12 +93,32 @@ mod tests {
 
     #[test]
     fn test_kernel_info_into_packets() {
+        use crate::header::Header;
+        use serde_json::{json, Value};
+
         let cmd = Command::KernelInfo;
         let auth = FakeAuth::create();
         let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
         let packets = wire.into_packets().expect("creating packets");
         compare_bytestrings!(&packets[0], &DELIMITER);
         compare_bytestrings!(&packets[1], &expected_signature().as_bytes());
-        // TODO: check the rest
+
+        let header_str = std::str::from_utf8(&packets[2]).unwrap();
+        let header: Header = serde_json::from_str(header_str).unwrap();
+
+        assert_eq!(header.msg_type, "kernel_info");
+
+        // The rest of the packet should be empty maps
+        let parent_header_str = std::str::from_utf8(&packets[3]).unwrap();
+        let parent_header: Value = serde_json::from_str(parent_header_str).unwrap();
+        assert_eq!(parent_header, json!({}));
+
+        let metadata_str = std::str::from_utf8(&packets[3]).unwrap();
+        let metadata: Value = serde_json::from_str(metadata_str).unwrap();
+        assert_eq!(metadata, json!({}));
+
+        let content_str = std::str::from_utf8(&packets[3]).unwrap();
+        let content: Value = serde_json::from_str(content_str).unwrap();
+        assert_eq!(content, json!({}));
     }
 }
