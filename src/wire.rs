@@ -62,9 +62,7 @@ mod tests {
             FakeAuth {}
         }
 
-        fn input(&mut self, data: &[u8]) {
-            println!("Adding data {:?}", data);
-        }
+        fn input(&mut self, data: &[u8]) {}
         fn reset(&mut self) {}
         fn result(self) -> MacResult<Self::OutputSize> {
             MacResult::new(GenericArray::clone_from_slice(KEY))
@@ -85,14 +83,22 @@ mod tests {
         encoded
     }
 
+    macro_rules! compare_bytestrings {
+        ($a:expr, $b:expr) => {
+            let a = String::from_utf8_lossy($a).into_owned();
+            let b = String::from_utf8_lossy($b).into_owned();
+            assert_eq!($a, $b, "result {:?} != expected {:?}", a, b);
+        };
+    }
+
     #[test]
     fn test_kernel_info_into_packets() {
         let cmd = Command::KernelInfo;
         let auth = FakeAuth::create();
         let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
         let packets = wire.into_packets().expect("creating packets");
-        assert_eq!(packets[0], DELIMITER);
-        assert_eq!(packets[1], expected_signature().as_bytes());
+        compare_bytestrings!(&packets[0], &DELIMITER);
+        compare_bytestrings!(&packets[1], &expected_signature().as_bytes());
         // TODO: check the rest
     }
 }
