@@ -50,19 +50,3 @@ impl Command {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::signatures::HmacSha256;
-    use hmac::Mac;
-
-    #[test]
-    fn test_kernel_info_message() {
-        let cmd = Command::KernelInfo;
-        let auth = HmacSha256::new_varkey(b"foobar").unwrap();
-        let wire = cmd.into_wire(auth).unwrap();
-        assert_eq!(wire.content, b"{}");
-        assert_eq!(wire.metadata, b"{}");
-    }
-}
