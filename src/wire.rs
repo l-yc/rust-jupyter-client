@@ -3,7 +3,7 @@ use failure::bail;
 use header::Header;
 use hmac::Mac;
 use metadata::Metadata;
-use responses::{KernelInfoContent, Response};
+use responses::*;
 use signatures::sign;
 
 type Part = Vec<u8>;
@@ -58,6 +58,15 @@ impl<M: Mac> WireMessage<M> {
             "kernel_info_reply" => {
                 let content: KernelInfoContent = serde_json::from_str(content_str)?;
                 Ok(Response::KernelInfo {
+                    header,
+                    parent_header,
+                    metadata,
+                    content,
+                })
+            },
+            "execute_reply" => {
+                let content: ExecuteReplyContent = serde_json::from_str(content_str)?;
+                Ok(Response::Execute {
                     header,
                     parent_header,
                     metadata,
