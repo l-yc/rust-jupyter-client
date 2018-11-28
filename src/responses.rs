@@ -36,6 +36,6 @@ pub struct KernelInfoContent {
 
 #[derive(Deserialize, Debug)]
 pub struct ExecuteReplyContent {
-    status: String,
-    execution_count: i64,
+    pub status: String,
+    pub execution_count: i64,
 }

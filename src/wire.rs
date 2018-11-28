@@ -157,24 +157,33 @@ mod tests {
         let auth = FakeAuth::create();
         let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
         let packets = wire.into_packets().expect("creating packets");
-        compare_bytestrings!(&packets[0], &DELIMITER);
-        compare_bytestrings!(&packets[1], &expected_signature().as_bytes());
 
-        let header_str = std::str::from_utf8(&packets[2]).unwrap();
+        let mut packets = packets.into_iter();
+        let packet = packets.next().unwrap();
+        compare_bytestrings!(&packet, &DELIMITER);
+
+        let packet = packets.next().unwrap();
+        compare_bytestrings!(&packet, &expected_signature().as_bytes());
+
+        let packet = packets.next().unwrap();
+        let header_str = std::str::from_utf8(&packet).unwrap();
         let header: Header = serde_json::from_str(header_str).unwrap();
 
         assert_eq!(header.msg_type, "kernel_info_request");
 
         // The rest of the packet should be empty maps
-        let parent_header_str = std::str::from_utf8(&packets[3]).unwrap();
+        let packet = packets.next().unwrap();
+        let parent_header_str = std::str::from_utf8(&packet).unwrap();
         let parent_header: Value = serde_json::from_str(parent_header_str).unwrap();
         assert_eq!(parent_header, json!({}));
 
-        let metadata_str = std::str::from_utf8(&packets[3]).unwrap();
+        let packet = packets.next().unwrap();
+        let metadata_str = std::str::from_utf8(&packet).unwrap();
         let metadata: Value = serde_json::from_str(metadata_str).unwrap();
         assert_eq!(metadata, json!({}));
 
-        let content_str = std::str::from_utf8(&packets[3]).unwrap();
+        let packet = packets.next().unwrap();
+        let content_str = std::str::from_utf8(&packet).unwrap();
         let content: Value = serde_json::from_str(content_str).unwrap();
         assert_eq!(content, json!({}));
     }
@@ -187,7 +196,7 @@ mod tests {
             expected_signature().into_bytes(),
             // Header
             r#"{
-                "date": "", 
+                "date": "",
                 "msg_id": "",
                 "username": "",
                 "session": "",
@@ -197,7 +206,7 @@ mod tests {
             .into_bytes(),
             // Parent header
             r#"{
-                "date": "", 
+                "date": "",
                 "msg_id": "",
                 "username": "",
                 "session": "",
@@ -243,6 +252,119 @@ mod tests {
                         url: "url".to_string(),
                     }]
                 );
+            }
+            _ => unreachable!("Incorrect response type, should be KernelInfo"),
+        }
+    }
+
+    #[test]
+    fn test_execute_request_into_packets() {
+        use crate::header::Header;
+        use serde_json::{json, Value};
+        use std::collections::HashMap;
+
+        let cmd = Command::ExecuteRequest {
+            code: "a = 10".to_string(),
+            silent: false,
+            store_history: true,
+            user_expressions: HashMap::new(),
+            allow_stdin: true,
+            stop_on_error: false,
+        };
+        let auth = FakeAuth::create();
+        let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
+        let packets = wire.into_packets().expect("creating packets");
+
+        let mut packets = packets.into_iter();
+        let packet = packets.next().unwrap();
+        compare_bytestrings!(&packet, &DELIMITER);
+
+        let packet = packets.next().unwrap();
+        compare_bytestrings!(&packet, &expected_signature().as_bytes());
+
+        let packet = packets.next().unwrap();
+        let header_str = std::str::from_utf8(&packet).unwrap();
+        let header: Header = serde_json::from_str(header_str).unwrap();
+
+        assert_eq!(header.msg_type, "execute_request");
+
+        // The rest of the packet should be empty maps
+        let packet = packets.next().unwrap();
+        let parent_header_str = std::str::from_utf8(&packet).unwrap();
+        let parent_header: Value = serde_json::from_str(parent_header_str).unwrap();
+        assert_eq!(parent_header, json!({}));
+
+        let packet = packets.next().unwrap();
+        let metadata_str = std::str::from_utf8(&packet).unwrap();
+        let metadata: Value = serde_json::from_str(metadata_str).unwrap();
+        assert_eq!(metadata, json!({}));
+
+        let packet = packets.next().unwrap();
+        let content_str = std::str::from_utf8(&packet).unwrap();
+        let content: Value = serde_json::from_str(content_str).unwrap();
+        assert_eq!(
+            content,
+            json!({
+            "code": "a = 10",
+            "silent": false,
+            "store_history": true,
+            "user_expressions": {},
+            "allow_stdin": true,
+            "stop_on_error": false,
+        })
+        );
+    }
+
+    #[test]
+    fn test_execute_request_message_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "execute_reply",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "execute_request",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "status": "ok",
+                "execution_count": 4
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::Execute {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            } => {
+                // Check the header
+                assert_eq!(header.msg_type, "execute_reply");
+
+                // Check the content
+                assert_eq!(content.status, "ok");
+                assert_eq!(content.execution_count, 4);
             }
             _ => unreachable!("Incorrect response type, should be KernelInfo"),
         }
