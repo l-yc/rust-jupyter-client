@@ -12,6 +12,8 @@ use structopt::StructOpt;
 struct Opt {
     #[structopt(parse(from_os_str))]
     filename: PathBuf,
+    #[structopt(name = "command", short = "c")]
+    command: String,
 }
 
 fn main() {
@@ -25,7 +27,7 @@ fn main() {
     let client = Client::from_reader(&file).expect("creating jupyter connection");
 
     let command = Command::ExecuteRequest {
-        code: "a = 10".to_string(),
+        code: args.command,
         silent: false,
         store_history: true,
         user_expressions: HashMap::new(),
