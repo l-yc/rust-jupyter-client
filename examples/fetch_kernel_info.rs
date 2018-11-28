@@ -25,5 +25,5 @@ fn main() {
 
     let command = Command::KernelInfo;
     let response = client.send_shell_command(command).expect("sending command");
-    println!("Response: {:?}", response);
+    println!("Response: {:#?}", response);
 }
