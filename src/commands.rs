@@ -1,9 +1,9 @@
 use errors::Result;
 use header::Header;
 use hmac::Mac;
-use wire::WireMessage;
-use std::collections::HashMap;
 use serde_derive::Serialize;
+use std::collections::HashMap;
+use wire::WireMessage;
 
 #[derive(Serialize)]
 #[serde(untagged)]
@@ -32,7 +32,7 @@ impl Command {
                     content: b"{}".to_vec(),
                     auth,
                 })
-            },
+            }
             r @ Command::ExecuteRequest { .. } => {
                 let header = Header::new("execute_request");
                 let header_bytes = header.to_bytes()?;

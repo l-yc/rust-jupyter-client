@@ -21,7 +21,7 @@ pub enum Response {
         parent_header: Header,
         metadata: Metadata,
         content: ExecuteReplyContent,
-    }
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -33,7 +33,6 @@ pub struct KernelInfoContent {
     pub status: String,
     pub help_links: Vec<HelpLink>,
 }
-
 
 #[derive(Deserialize, Debug)]
 pub struct ExecuteReplyContent {

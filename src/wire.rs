@@ -63,7 +63,7 @@ impl<M: Mac> WireMessage<M> {
                     metadata,
                     content,
                 })
-            },
+            }
             "execute_reply" => {
                 let content: ExecuteReplyContent = serde_json::from_str(content_str)?;
                 Ok(Response::Execute {

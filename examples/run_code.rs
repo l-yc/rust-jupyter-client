@@ -2,8 +2,8 @@ extern crate env_logger;
 extern crate jupyter_client;
 extern crate structopt;
 
-use std::collections::HashMap;
 use jupyter_client::{Client, Command};
+use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -31,9 +31,7 @@ fn main() {
         user_expressions: HashMap::new(),
         allow_stdin: true,
         stop_on_error: false,
-        
     };
     let response = client.send_shell_command(command).expect("sending command");
     println!("Response: {:#?}", response);
 }
-
