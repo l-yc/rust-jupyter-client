@@ -20,7 +20,7 @@ impl Client {
     where
         R: Read,
     {
-        let config: ConnectionConfig = serde_json::from_reader(reader)?;
+        let config: ConnectionConfig = ConnectionConfig::from_reader(reader)?;
         let auth = HmacSha256::new_varkey(config.key.as_bytes())
             .map_err(|e| format_err!("Error constructing HMAC: {:?}", e))?;
 
