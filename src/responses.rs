@@ -57,7 +57,7 @@ pub struct StatusContent {
     pub execution_state: ExecutionState,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ExecutionState {
     Busy,

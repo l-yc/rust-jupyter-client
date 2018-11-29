@@ -388,4 +388,112 @@ mod tests {
             _ => unreachable!("Incorrect response type, should be KernelInfo"),
         }
     }
+
+    #[test]
+    fn test_status_message_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "status",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header, not relevant
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "execute_request",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "execution_state": "busy"
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::Status {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            } => {
+                // Check the header
+                assert_eq!(header.msg_type, "status");
+
+                // Check the content
+                assert_eq!(content.execution_state, ExecutionState::Busy);
+            }
+            _ => unreachable!("Incorrect response type, should be Status"),
+        }
+    }
+
+    #[test]
+    fn test_execute_input_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "execute_input",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header, not relevant
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "code": "a = 10",
+                "execution_count": 4
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::ExecuteInput {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            } => {
+                // Check the header
+                assert_eq!(header.msg_type, "execute_input");
+
+                // Check the content
+                assert_eq!(content.code, "a = 10");
+                assert_eq!(content.execution_count, 4);
+            }
+            _ => unreachable!("Incorrect response type, should be Status"),
+        }
+    }
 }
