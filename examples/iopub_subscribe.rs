@@ -2,7 +2,7 @@ extern crate env_logger;
 extern crate jupyter_client;
 extern crate structopt;
 
-use jupyter_client::{Client, Command};
+use jupyter_client::Client;
 use std::fs::File;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -23,7 +23,8 @@ fn main() {
 
     let client = Client::from_reader(&file).expect("creating jupyter connection");
 
-    let command = Command::KernelInfo;
-    let response = client.send_shell_command(command).expect("sending command");
-    println!("Response: {:#?}", response);
+    let receiver = client.iopub_subscribe().unwrap();
+    for msg in receiver {
+        println!("{:?}", msg);
+    }
 }
