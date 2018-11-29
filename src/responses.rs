@@ -1,6 +1,8 @@
 use header::Header;
 use metadata::Metadata;
 use serde_derive::Deserialize;
+use serde_json::Value;
+use std::collections::HashMap;
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct HelpLink {
@@ -56,6 +58,8 @@ pub struct KernelInfoContent {
 pub struct ExecuteReplyContent {
     pub status: String,
     pub execution_count: i64,
+    pub payload: Option<Vec<HashMap<String, Value>>>,
+    pub user_expressions: Option<HashMap<String, Value>>,
 }
 
 #[derive(Deserialize, Debug)]
