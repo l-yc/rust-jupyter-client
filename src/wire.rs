@@ -83,6 +83,15 @@ impl<M: Mac> WireMessage<M> {
                     content,
                 })
             }
+            "execute_input" => {
+                let content: ExecuteInputContent = serde_json::from_str(content_str)?;
+                Ok(Response::ExecuteInput {
+                    header,
+                    parent_header,
+                    metadata,
+                    content,
+                })
+            }
             _ => unreachable!("{}", header.msg_type),
         }
     }

@@ -28,6 +28,12 @@ pub enum Response {
         metadata: Metadata,
         content: StatusContent,
     },
+    ExecuteInput {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: ExecuteInputContent,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -48,7 +54,7 @@ pub struct ExecuteReplyContent {
 
 #[derive(Deserialize, Debug)]
 pub struct StatusContent {
-    execution_state: ExecutionState,
+    pub execution_state: ExecutionState,
 }
 
 #[derive(Deserialize, Debug)]
@@ -57,4 +63,10 @@ pub enum ExecutionState {
     Busy,
     Idle,
     Starting,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ExecuteInputContent {
+    pub code: String,
+    pub execution_count: i64,
 }
