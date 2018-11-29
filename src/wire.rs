@@ -74,6 +74,15 @@ impl<M: Mac> WireMessage<M> {
                     content,
                 })
             }
+            "status" => {
+                let content: StatusContent = serde_json::from_str(content_str)?;
+                Ok(Response::Status {
+                    header,
+                    parent_header,
+                    metadata,
+                    content,
+                })
+            }
             _ => unreachable!("{}", header.msg_type),
         }
     }

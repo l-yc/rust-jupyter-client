@@ -22,6 +22,12 @@ pub enum Response {
         metadata: Metadata,
         content: ExecuteReplyContent,
     },
+    Status {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: StatusContent,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -38,4 +44,17 @@ pub struct KernelInfoContent {
 pub struct ExecuteReplyContent {
     pub status: String,
     pub execution_count: i64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct StatusContent {
+    execution_state: ExecutionState,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "lowercase")]
+pub enum ExecutionState {
+    Busy,
+    Idle,
+    Starting,
 }
