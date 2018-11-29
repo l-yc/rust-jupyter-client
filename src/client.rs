@@ -3,13 +3,13 @@ use connection_config::ConnectionConfig;
 use errors::Result;
 use failure::format_err;
 use hmac::Mac;
-use std::thread;
 use log::trace;
-use std::sync::mpsc::{self, Receiver};
 use responses::Response;
-use std::sync::{Arc, Mutex};
 use signatures::HmacSha256;
 use std::io::Read;
+use std::sync::mpsc::{self, Receiver};
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 use socket::Socket;
 
@@ -61,13 +61,11 @@ impl Client {
         let socket = self.iopub_socket.clone();
         let auth = self.auth.clone();
 
-        thread::spawn(move || {
-            loop {
-                let socket = socket.lock().unwrap();
-                let wire = socket.recv_wire(auth.clone()).unwrap();
-                let msg = wire.into_response().unwrap();
-                tx.send(msg).unwrap();
-            }
+        thread::spawn(move || loop {
+            let socket = socket.lock().unwrap();
+            let wire = socket.recv_wire(auth.clone()).unwrap();
+            let msg = wire.into_response().unwrap();
+            tx.send(msg).unwrap();
         });
 
         Ok(rx)
