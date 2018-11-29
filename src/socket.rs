@@ -18,3 +18,12 @@ impl Socket {
         WireMessage::from_raw_response(raw_response, auth.clone())
     }
 }
+
+// #[derive(Clone)]
+// pub(crate) struct IoPubSocket(pub Arc<Mutex<Socket>>);
+
+// impl IoPubSocket {
+//     pub(crate) fn recv_wire<M: Mac>(&self, auth: M) -> Result<WireMessage<M>> {
+//         self.0.lock()?.recv_wire(auth)
+//     }
+// }
