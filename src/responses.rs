@@ -34,6 +34,12 @@ pub enum Response {
         metadata: Metadata,
         content: ExecuteInputContent,
     },
+    Stream {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: StreamContent,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -69,4 +75,17 @@ pub enum ExecutionState {
 pub struct ExecuteInputContent {
     pub code: String,
     pub execution_count: i64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct StreamContent {
+    pub name: StreamType,
+    pub text: String,
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum StreamType {
+    Stdout,
+    Stderr,
 }

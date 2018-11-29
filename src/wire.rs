@@ -92,6 +92,15 @@ impl<M: Mac> WireMessage<M> {
                     content,
                 })
             }
+            "stream" => {
+                let content: StreamContent = serde_json::from_str(content_str)?;
+                Ok(Response::Stream {
+                    header,
+                    parent_header,
+                    metadata,
+                    content,
+                })
+            }
             _ => unreachable!("{}", header.msg_type),
         }
     }
@@ -494,6 +503,61 @@ mod tests {
                 assert_eq!(content.execution_count, 4);
             }
             _ => unreachable!("Incorrect response type, should be Status"),
+        }
+    }
+
+    #[test]
+    fn test_stream_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "stream",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header, not relevant
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "name": "stdout",
+                "text": "10"
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::Stream {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            } => {
+                // Check the header
+                assert_eq!(header.msg_type, "stream");
+
+                // Check the content
+                assert_eq!(content.name, StreamType::Stdout);
+                assert_eq!(content.text, "10");
+            }
+            _ => unreachable!("Incorrect response type, should be Stream"),
         }
     }
 }
