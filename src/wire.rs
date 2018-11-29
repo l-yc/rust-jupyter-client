@@ -1,5 +1,5 @@
 use errors::Result;
-use failure::bail;
+use failure::{bail, format_err};
 use header::Header;
 use hmac::Mac;
 use metadata::Metadata;
@@ -20,13 +20,14 @@ pub(crate) struct WireMessage<M: Mac> {
 
 impl<M: Mac> WireMessage<M> {
     pub(crate) fn from_raw_response(raw: Vec<Vec<u8>>, auth: M) -> Result<Self> {
-        // TODO: short sighted
-        assert_eq!(raw.len(), 6);
-        assert_eq!(&raw[0], &DELIMITER);
+        let delim_idx = raw
+            .iter()
+            .position(|r| String::from_utf8(r.to_vec()).unwrap() == "<IDS|MSG>")
+            .ok_or_else(|| format_err!("cannot find delimiter in response"))?;
 
         // Check the signature
-        let signature = String::from_utf8_lossy(&raw[1]);
-        let msg_frames = &raw[2..];
+        let signature = String::from_utf8_lossy(&raw[delim_idx + 1]);
+        let msg_frames = &raw[delim_idx + 2..];
         let check_sig = sign(msg_frames, auth.clone());
 
         if check_sig != signature {
