@@ -59,10 +59,37 @@ fn main() {
         .send_shell_command(prep_cmd)
         .expect("sending command");
 
+    // tail history
     let command = Command::History {
         output: true,
         raw: false,
         hist_access_type: HistoryAccessType::Tail { n: 10 },
+        unique: false,
+    };
+    let response = client.send_shell_command(command).expect("sending command");
+    println!("Response: {:#?}", response);
+
+    // range history
+    let command = Command::History {
+        output: true,
+        raw: false,
+        hist_access_type: HistoryAccessType::Range {
+            session: -2,
+            start: 0,
+            stop: 15,
+        },
+        unique: false,
+    };
+    let response = client.send_shell_command(command).expect("sending command");
+    println!("Response: {:#?}", response);
+
+    // search history
+    let command = Command::History {
+        output: true,
+        raw: false,
+        hist_access_type: HistoryAccessType::Search {
+            pattern: "def bar*".to_string(),
+        },
         unique: false,
     };
     let response = client.send_shell_command(command).expect("sending command");

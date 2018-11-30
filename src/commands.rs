@@ -113,6 +113,32 @@ impl Command {
                             "n": n,
                             "pattern": null,
                         }),
+                    HistoryAccessType::Range {
+                        session,
+                        start,
+                        stop,
+                    } => json!({
+                            "output": output,
+                            "raw": raw,
+                            "unique": unique,
+                            "hist_access_type": "tail",
+                            "session": session,
+                            "start": start,
+                            "stop": stop,
+                            "n": null,
+                            "pattern": null,
+                    }),
+                    HistoryAccessType::Search { pattern } => json!({
+                            "output": output,
+                            "raw": raw,
+                            "unique": unique,
+                            "hist_access_type": "tail",
+                            "session": null,
+                            "start": null,
+                            "stop": null,
+                            "n": null,
+                            "pattern": pattern,
+                    }),
                 };
 
                 let content_str = serde_json::to_string(&content)?;
@@ -133,6 +159,8 @@ impl Command {
 #[derive(Serialize, Debug)]
 pub enum HistoryAccessType {
     Tail { n: u64 },
+    Range { session: i64, start: u64, stop: u64 },
+    Search { pattern: String },
 }
 
 #[derive(Debug)]
