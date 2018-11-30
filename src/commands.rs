@@ -23,6 +23,10 @@ pub enum Command {
         cursor_pos: u64,
         detail_level: DetailLevel,
     },
+    Completion {
+        code: String,
+        cursor_pos: u64,
+    },
 }
 
 impl Command {
@@ -55,6 +59,20 @@ impl Command {
             }
             r @ Command::Inspect { .. } => {
                 let header = Header::new("inspect_request");
+                let header_bytes = header.to_bytes()?;
+                let content_str = serde_json::to_string(&r)?;
+                let content = content_str.into_bytes();
+
+                Ok(WireMessage {
+                    header: header_bytes.to_vec(),
+                    parent_header: b"{}".to_vec(),
+                    metadata: b"{}".to_vec(),
+                    content,
+                    auth,
+                })
+            }
+            r @ Command::Completion { .. } => {
+                let header = Header::new("complete_request");
                 let header_bytes = header.to_bytes()?;
                 let content_str = serde_json::to_string(&r)?;
                 let content = content_str.into_bytes();

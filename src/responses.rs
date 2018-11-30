@@ -54,6 +54,12 @@ pub enum Response {
         metadata: Metadata,
         content: InspectContent,
     },
+    Complete {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: CompleteContent,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -117,6 +123,15 @@ pub struct ErrorContent {
     pub ename: String,
     pub evalue: String,
     pub traceback: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CompleteContent {
+    matches: Vec<String>,
+    cursor_start: u64,
+    cursor_end: u64,
+    metadata: HashMap<String, Value>,
+    status: Status,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
