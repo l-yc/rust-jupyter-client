@@ -48,6 +48,12 @@ pub enum Response {
         metadata: Metadata,
         content: ErrorContent,
     },
+    Inspect {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: InspectContent,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -90,6 +96,14 @@ pub enum ExecutionState {
 pub struct ExecuteInputContent {
     pub code: String,
     pub execution_count: i64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct InspectContent {
+    pub status: Status,
+    pub found: bool,
+    pub data: HashMap<String, Value>,
+    pub metadata: HashMap<String, Value>,
 }
 
 #[derive(Deserialize, Debug)]

@@ -3,7 +3,7 @@ use connection_config::ConnectionConfig;
 use errors::Result;
 use failure::format_err;
 use hmac::Mac;
-use log::trace;
+use log::{debug, trace};
 use responses::Response;
 use signatures::HmacSha256;
 use std::io::Read;
@@ -56,6 +56,7 @@ impl Client {
     }
 
     pub fn send_shell_command(&self, command: Command) -> Result<Response> {
+        debug!("Sending shell command: {:?}", command);
         let wire = command.into_wire(self.auth.clone())?;
         self.shell_socket.send_wire(wire)?;
 
