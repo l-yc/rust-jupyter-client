@@ -58,8 +58,13 @@ pub struct KernelInfoContent {
 pub struct ExecuteReplyContent {
     pub status: String,
     pub execution_count: i64,
-    pub payload: Option<Vec<HashMap<String, Value>>>,
-    pub user_expressions: Option<HashMap<String, Value>>,
+    // status == "ok" fields
+    pub payload: Vec<HashMap<String, Value>>,
+    pub user_expressions: HashMap<String, Value>,
+    // status == "error" fields
+    pub ename: Option<String>,
+    pub evalue: Option<String>,
+    pub traceback: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug)]
