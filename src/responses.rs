@@ -60,6 +60,12 @@ pub enum Response {
         metadata: Metadata,
         content: CompleteContent,
     },
+    History {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: HistoryContent,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -127,11 +133,16 @@ pub struct ErrorContent {
 
 #[derive(Deserialize, Debug)]
 pub struct CompleteContent {
-    matches: Vec<String>,
-    cursor_start: u64,
-    cursor_end: u64,
-    metadata: HashMap<String, Value>,
-    status: Status,
+    pub matches: Vec<String>,
+    pub cursor_start: u64,
+    pub cursor_end: u64,
+    pub metadata: HashMap<String, Value>,
+    pub status: Status,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct HistoryContent {
+    pub history: Vec<Value>,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]

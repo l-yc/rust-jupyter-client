@@ -3,6 +3,7 @@ use header::Header;
 use hmac::Mac;
 use serde::{Serialize as SerdeSerialize, Serializer};
 use serde_derive::Serialize;
+use serde_json::json;
 use std::collections::HashMap;
 use wire::WireMessage;
 
@@ -26,6 +27,12 @@ pub enum Command {
     Completion {
         code: String,
         cursor_pos: u64,
+    },
+    History {
+        output: bool,
+        raw: bool,
+        hist_access_type: HistoryAccessType,
+        unique: bool,
     },
 }
 
@@ -85,8 +92,47 @@ impl Command {
                     auth,
                 })
             }
+            Command::History {
+                output,
+                raw,
+                hist_access_type,
+                unique,
+            } => {
+                let header = Header::new("history_request");
+                let header_bytes = header.to_bytes()?;
+
+                let content = match hist_access_type {
+                    HistoryAccessType::Tail { n } => json!({
+                            "output": output,
+                            "raw": raw,
+                            "unique": unique,
+                            "hist_access_type": "tail",
+                            "session": null,
+                            "start": null,
+                            "stop": null,
+                            "n": n,
+                            "pattern": null,
+                        }),
+                };
+
+                let content_str = serde_json::to_string(&content)?;
+                let content = content_str.into_bytes();
+
+                Ok(WireMessage {
+                    header: header_bytes.to_vec(),
+                    parent_header: b"{}".to_vec(),
+                    metadata: b"{}".to_vec(),
+                    content,
+                    auth,
+                })
+            }
         }
     }
+}
+
+#[derive(Serialize, Debug)]
+pub enum HistoryAccessType {
+    Tail { n: u64 },
 }
 
 #[derive(Debug)]
