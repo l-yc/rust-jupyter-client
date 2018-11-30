@@ -110,6 +110,15 @@ impl<M: Mac> WireMessage<M> {
                     content,
                 })
             }
+            "inspect_reply" => {
+                let content: InspectContent = serde_json::from_str(content_str)?;
+                Ok(Response::Inspect {
+                    header,
+                    parent_header,
+                    metadata,
+                    content,
+                })
+            }
             _ => unreachable!("{}", header.msg_type),
         }
     }

@@ -18,7 +18,7 @@ extern crate digest;
 extern crate generic_array;
 
 mod client;
-mod commands;
+pub mod commands;
 mod connection_config;
 mod errors;
 mod header;
@@ -30,3 +30,4 @@ mod wire;
 
 pub use client::Client;
 pub use commands::Command;
+pub use responses::Response;

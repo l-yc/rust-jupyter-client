@@ -1,0 +1,74 @@
+extern crate env_logger;
+extern crate jupyter_client;
+extern crate structopt;
+
+use jupyter_client::commands::DetailLevel;
+use jupyter_client::{Client, Command, Response};
+use std::collections::HashMap;
+use std::fs::File;
+use std::path::PathBuf;
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+struct Opt {
+    #[structopt(parse(from_os_str))]
+    filename: PathBuf,
+}
+
+fn main() {
+    env_logger::init();
+
+    let args = Opt::from_args();
+
+    let filename = args.filename;
+    let file = File::open(filename).expect("opening jupyter config file");
+
+    let client = Client::from_reader(&file).expect("creating jupyter connection");
+
+    // Set up some previous code
+    let code = r#"class Foo(object):
+    """Foo class"""
+    pass
+"#.to_string();
+    let prep_cmd = Command::Execute {
+        code: code,
+        silent: false,
+        store_history: true,
+        user_expressions: HashMap::new(),
+        allow_stdin: true,
+        stop_on_error: false,
+    };
+
+    client
+        .send_shell_command(prep_cmd)
+        .expect("sending command");
+
+    let prep_cmd = Command::Execute {
+        code: "a = Foo()".to_string(),
+        silent: false,
+        store_history: true,
+        user_expressions: HashMap::new(),
+        allow_stdin: true,
+        stop_on_error: false,
+    };
+
+    client
+        .send_shell_command(prep_cmd)
+        .expect("sending command");
+
+    let command = Command::Inspect {
+        code: "a".to_string(),
+        cursor_pos: 1,
+        detail_level: DetailLevel::Zero,
+    };
+    let response = client.send_shell_command(command).expect("sending command");
+    println!("Response: {:#?}", response);
+
+    // Get some more detail and print the help
+    if let Response::Inspect { content, .. } = response {
+        println!(
+            "\nHelp:\n\n{}",
+            content.data["text/plain"].as_str().unwrap()
+        );
+    }
+}
