@@ -42,6 +42,12 @@ pub enum Response {
         metadata: Metadata,
         content: StreamContent,
     },
+    Error {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: ErrorContent,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -90,6 +96,13 @@ pub struct ExecuteInputContent {
 pub struct StreamContent {
     pub name: StreamType,
     pub text: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ErrorContent {
+    pub ename: String,
+    pub evalue: String,
+    pub traceback: Vec<String>,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]

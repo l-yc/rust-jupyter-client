@@ -101,6 +101,15 @@ impl<M: Mac> WireMessage<M> {
                     content,
                 })
             }
+            "error" => {
+                let content: ErrorContent = serde_json::from_str(content_str)?;
+                Ok(Response::Error {
+                    header,
+                    parent_header,
+                    metadata,
+                    content,
+                })
+            }
             _ => unreachable!("{}", header.msg_type),
         }
     }
