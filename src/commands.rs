@@ -9,7 +9,7 @@ use wire::WireMessage;
 #[serde(untagged)]
 pub enum Command {
     KernelInfo,
-    ExecuteRequest {
+    Execute {
         code: String,
         silent: bool,
         store_history: bool,
@@ -33,7 +33,7 @@ impl Command {
                     auth,
                 })
             }
-            r @ Command::ExecuteRequest { .. } => {
+            r @ Command::Execute { .. } => {
                 let header = Header::new("execute_request");
                 let header_bytes = header.to_bytes()?;
                 let content_str = serde_json::to_string(&r)?;

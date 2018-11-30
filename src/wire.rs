@@ -300,7 +300,7 @@ mod tests {
         use serde_json::{json, Value};
         use std::collections::HashMap;
 
-        let cmd = Command::ExecuteRequest {
+        let cmd = Command::Execute {
             code: "a = 10".to_string(),
             silent: false,
             store_history: true,

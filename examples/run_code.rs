@@ -26,7 +26,7 @@ fn main() {
 
     let client = Client::from_reader(&file).expect("creating jupyter connection");
 
-    let command = Command::ExecuteRequest {
+    let command = Command::Execute {
         code: args.command,
         silent: false,
         store_history: true,
