@@ -119,6 +119,15 @@ impl<M: Mac> WireMessage<M> {
                     content,
                 })
             }
+            "complete_reply" => {
+                let content: CompleteContent = serde_json::from_str(content_str)?;
+                Ok(Response::Complete {
+                    header,
+                    parent_header,
+                    metadata,
+                    content,
+                })
+            }
             _ => unreachable!("{}", header.msg_type),
         }
     }
