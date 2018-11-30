@@ -10,12 +10,14 @@ use std::io::Read;
 use std::sync::mpsc::{self, Receiver};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::Duration;
 
 use socket::Socket;
 
 pub struct Client {
     shell_socket: Socket,
     iopub_socket: Arc<Mutex<Socket>>,
+    heartbeat_socket: Arc<Mutex<Socket>>,
     auth: HmacSha256,
 }
 
@@ -41,9 +43,14 @@ impl Client {
         iopub_socket.connect(&format!("tcp://localhost:{port}", port = config.iopub_port))?;
         iopub_socket.set_subscribe("".as_bytes())?;
 
+        trace!("heartbeat port: {}", config.hb_port);
+        let heartbeat_socket = ctx.socket(zmq::REQ)?;
+        heartbeat_socket.connect(&format!("tcp://localhost:{port}", port = config.hb_port))?;
+
         Ok(Client {
             shell_socket: Socket(shell_socket),
             iopub_socket: Arc::new(Mutex::new(Socket(iopub_socket))),
+            heartbeat_socket: Arc::new(Mutex::new(Socket(heartbeat_socket))),
             auth: auth,
         })
     }
@@ -69,5 +76,22 @@ impl Client {
         });
 
         Ok(rx)
+    }
+
+    pub fn heartbeat_every(&self, seconds: Duration) -> Result<Receiver<()>> {
+        let (tx, rx) = mpsc::channel();
+        let socket = self.heartbeat_socket.clone();
+
+        thread::spawn(move || loop {
+            let socket = socket.lock().unwrap();
+            let _msg = socket.heartbeat().unwrap();
+            tx.send(()).unwrap();
+            thread::sleep(seconds);
+        });
+        Ok(rx)
+    }
+
+    pub fn heartbeat(&self) -> Result<Receiver<()>> {
+        self.heartbeat_every(Duration::from_secs(1))
     }
 }
