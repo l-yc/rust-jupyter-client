@@ -1,6 +1,8 @@
 use header::Header;
 use metadata::Metadata;
 use serde_derive::Deserialize;
+use serde_json::Value;
+use std::collections::HashMap;
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct HelpLink {
@@ -40,6 +42,12 @@ pub enum Response {
         metadata: Metadata,
         content: StreamContent,
     },
+    Error {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: ErrorContent,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -48,14 +56,21 @@ pub struct KernelInfoContent {
     pub implementation: String,
     pub implementation_version: String,
     pub protocol_version: String,
-    pub status: String,
+    pub status: Status,
     pub help_links: Vec<HelpLink>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct ExecuteReplyContent {
-    pub status: String,
+    pub status: Status,
     pub execution_count: i64,
+    // status == "ok" fields
+    pub payload: Option<Vec<HashMap<String, Value>>>,
+    pub user_expressions: Option<HashMap<String, Value>>,
+    // status == "error" fields
+    pub ename: Option<String>,
+    pub evalue: Option<String>,
+    pub traceback: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -83,9 +98,24 @@ pub struct StreamContent {
     pub text: String,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct ErrorContent {
+    pub ename: String,
+    pub evalue: String,
+    pub traceback: Vec<String>,
+}
+
 #[derive(Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum StreamType {
     Stdout,
     Stderr,
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum Status {
+    Ok,
+    Error,
+    Abort,
 }
