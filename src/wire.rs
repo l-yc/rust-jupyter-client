@@ -104,6 +104,12 @@ impl<M: Mac> WireMessage<M> {
                 metadata,
                 content: serde_json::from_str(content_str)?,
             }),
+            "history_reply" => Ok(Response::History {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            }),
             _ => unreachable!("{}", header.msg_type),
         }
     }
