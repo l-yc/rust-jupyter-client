@@ -50,17 +50,17 @@ pub struct KernelInfoContent {
     pub implementation: String,
     pub implementation_version: String,
     pub protocol_version: String,
-    pub status: String,
+    pub status: Status,
     pub help_links: Vec<HelpLink>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct ExecuteReplyContent {
-    pub status: String,
+    pub status: Status,
     pub execution_count: i64,
     // status == "ok" fields
-    pub payload: Vec<HashMap<String, Value>>,
-    pub user_expressions: HashMap<String, Value>,
+    pub payload: Option<Vec<HashMap<String, Value>>>,
+    pub user_expressions: Option<HashMap<String, Value>>,
     // status == "error" fields
     pub ename: Option<String>,
     pub evalue: Option<String>,
@@ -97,4 +97,12 @@ pub struct StreamContent {
 pub enum StreamType {
     Stdout,
     Stderr,
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum Status {
+    Ok,
+    Error,
+    Abort,
 }

@@ -250,7 +250,7 @@ mod tests {
                 "implementation": "implementation",
                 "implementation_version": "implementation_version",
                 "protocol_version": "protocol_version",
-                "status": "status",
+                "status": "ok",
                 "help_links": [{"text": "text", "url": "url"}]
             }"#.to_string()
             .into_bytes(),
@@ -272,7 +272,7 @@ mod tests {
                 assert_eq!(content.implementation, "implementation");
                 assert_eq!(content.implementation_version, "implementation_version");
                 assert_eq!(content.protocol_version, "protocol_version");
-                assert_eq!(content.status, "status");
+                assert_eq!(content.status, Status::Ok);
                 assert_eq!(
                     content.help_links,
                     vec![HelpLink {
@@ -391,7 +391,7 @@ mod tests {
                 assert_eq!(header.msg_type, "execute_reply");
 
                 // Check the content
-                assert_eq!(content.status, "ok");
+                assert_eq!(content.status, Status::Ok);
                 assert_eq!(content.execution_count, 4);
             }
             _ => unreachable!("Incorrect response type, should be KernelInfo"),
