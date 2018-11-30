@@ -17,6 +17,12 @@ impl Socket {
         let raw_response = self.0.recv_multipart(0)?;
         WireMessage::from_raw_response(raw_response, auth.clone())
     }
+
+    pub(crate) fn heartbeat(&self) -> Result<()> {
+        self.0.send(b"", 0)?;
+        let _msg = self.0.recv_msg(0)?;
+        Ok(())
+    }
 }
 
 // #[derive(Clone)]
