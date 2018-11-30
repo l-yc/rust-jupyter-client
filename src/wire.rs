@@ -56,78 +56,60 @@ impl<M: Mac> WireMessage<M> {
         let content_str = std::str::from_utf8(&self.content)?;
 
         match header.msg_type.as_str() {
-            "kernel_info_reply" => {
-                let content: KernelInfoContent = serde_json::from_str(content_str)?;
-                Ok(Response::KernelInfo {
-                    header,
-                    parent_header,
-                    metadata,
-                    content,
-                })
-            }
-            "execute_reply" => {
-                let content: ExecuteReplyContent = serde_json::from_str(content_str)?;
-                Ok(Response::Execute {
-                    header,
-                    parent_header,
-                    metadata,
-                    content,
-                })
-            }
-            "status" => {
-                let content: StatusContent = serde_json::from_str(content_str)?;
-                Ok(Response::Status {
-                    header,
-                    parent_header,
-                    metadata,
-                    content,
-                })
-            }
-            "execute_input" => {
-                let content: ExecuteInputContent = serde_json::from_str(content_str)?;
-                Ok(Response::ExecuteInput {
-                    header,
-                    parent_header,
-                    metadata,
-                    content,
-                })
-            }
-            "stream" => {
-                let content: StreamContent = serde_json::from_str(content_str)?;
-                Ok(Response::Stream {
-                    header,
-                    parent_header,
-                    metadata,
-                    content,
-                })
-            }
-            "error" => {
-                let content: ErrorContent = serde_json::from_str(content_str)?;
-                Ok(Response::Error {
-                    header,
-                    parent_header,
-                    metadata,
-                    content,
-                })
-            }
-            "inspect_reply" => {
-                let content: InspectContent = serde_json::from_str(content_str)?;
-                Ok(Response::Inspect {
-                    header,
-                    parent_header,
-                    metadata,
-                    content,
-                })
-            }
-            "complete_reply" => {
-                let content: CompleteContent = serde_json::from_str(content_str)?;
-                Ok(Response::Complete {
-                    header,
-                    parent_header,
-                    metadata,
-                    content,
-                })
-            }
+            "kernel_info_reply" => Ok(Response::KernelInfo {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            }),
+            "execute_reply" => Ok(Response::Execute {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            }),
+            "status" => Ok(Response::Status {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            }),
+            "execute_input" => Ok(Response::ExecuteInput {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            }),
+            "stream" => Ok(Response::Stream {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            }),
+            "error" => Ok(Response::Error {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            }),
+            "inspect_reply" => Ok(Response::Inspect {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            }),
+            "complete_reply" => Ok(Response::Complete {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            }),
+            "history_reply" => Ok(Response::History {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            }),
             _ => unreachable!("{}", header.msg_type),
         }
     }
