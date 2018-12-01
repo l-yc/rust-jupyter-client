@@ -19,8 +19,8 @@ These are the steps to add a new Command/Response pair:
 - [x] `complete_request`
 - [x] `history_request`
 - [x] `is_complete_request`
+- [x] `shutdown_request`
 - [ ] `comm_info_request`
-- [ ] `shutdown_request`
 - [ ] `interrupt_request`
 
 ## Kernel -> Client (SHELL)
@@ -31,18 +31,18 @@ These are the steps to add a new Command/Response pair:
 - [x] `complete_reply`
 - [x] `history_reply`
 - [x] `is_complete_reply`
+- [x] `shutdown_reply`
 - [ ] `comm_info_reply`
-- [ ] `shutdown_reply`
 
 ## Kernel -> Client (IOPUB)
 
 - [x] `stream`
 - [x] `status`
+- [x] `execute_input`
+- [x] `error`
 - [ ] `display_data`
 - [ ] `update_display_data`
-- [x] `execute_input`
 - [ ] `execute_result`
-- [x] `error`
 - [ ] `clear_output`
 
 ## Kernel -> Client (STDIN)

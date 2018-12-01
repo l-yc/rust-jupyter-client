@@ -54,6 +54,12 @@ pub enum ShellResponse {
         metadata: Metadata,
         content: IsCompleteStatus,
     },
+    Shutdown {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: ShutdownContent,
+    },
 }
 
 #[derive(Debug)]
@@ -159,6 +165,11 @@ pub struct CompleteContent {
 #[derive(Deserialize, Debug)]
 pub struct HistoryContent {
     pub history: Vec<Value>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ShutdownContent {
+    pub restart: bool,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
