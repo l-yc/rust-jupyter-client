@@ -12,7 +12,22 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use socket::Socket;
+use socket::{Socket, SocketType};
+
+fn connection_string(config: &ConnectionConfig, socket_type: SocketType) -> String {
+    let port = match socket_type {
+        SocketType::Shell => config.shell_port,
+        SocketType::IoPub => config.iopub_port,
+        SocketType::Heartbeat => config.hb_port,
+    };
+
+    format!(
+        "{transport}://{ip}:{port}",
+        transport = config.transport,
+        ip = config.ip,
+        port = port
+    )
+}
 
 pub struct Client {
     shell_socket: Socket,
@@ -35,17 +50,17 @@ impl Client {
         // Set up the sockets
         trace!("shell port: {}", config.shell_port);
         let shell_socket = ctx.socket(zmq::REQ)?;
-        shell_socket.connect(&format!("tcp://localhost:{port}", port = config.shell_port))?;
+        shell_socket.connect(&connection_string(&config, SocketType::Shell))?;
 
         // Set up iopub socket
         trace!("iopub port: {}", config.iopub_port);
         let iopub_socket = ctx.socket(zmq::SUB)?;
-        iopub_socket.connect(&format!("tcp://localhost:{port}", port = config.iopub_port))?;
+        iopub_socket.connect(&connection_string(&config, SocketType::IoPub))?;
         iopub_socket.set_subscribe("".as_bytes())?;
 
         trace!("heartbeat port: {}", config.hb_port);
         let heartbeat_socket = ctx.socket(zmq::REQ)?;
-        heartbeat_socket.connect(&format!("tcp://localhost:{port}", port = config.hb_port))?;
+        heartbeat_socket.connect(&connection_string(&config, SocketType::Heartbeat))?;
 
         Ok(Client {
             shell_socket: Socket(shell_socket),

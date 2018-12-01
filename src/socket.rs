@@ -3,6 +3,12 @@ use hmac::Mac;
 use wire::WireMessage;
 use zmq;
 
+pub(crate) enum SocketType {
+    Shell,
+    IoPub,
+    Heartbeat,
+}
+
 pub(crate) struct Socket(pub zmq::Socket);
 
 impl Socket {
