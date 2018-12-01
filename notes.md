@@ -18,8 +18,8 @@ These are the steps to add a new Command/Response pair:
 - [x] `inspect_request`
 - [x] `complete_request`
 - [x] `history_request`
+- [x] `is_complete_request`
 - [x] `shutdown_request`
-- [ ] `is_complete_request`
 - [ ] `comm_info_request`
 - [ ] `interrupt_request`
 
@@ -30,8 +30,8 @@ These are the steps to add a new Command/Response pair:
 - [x] `inspect_reply`
 - [x] `complete_reply`
 - [x] `history_reply`
+- [x] `is_complete_reply`
 - [x] `shutdown_reply`
-- [ ] `is_complete_reply`
 - [ ] `comm_info_reply`
 
 ## Kernel -> Client (IOPUB)

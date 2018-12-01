@@ -4,6 +4,7 @@ use header::Header;
 use hmac::Mac;
 use metadata::Metadata;
 use responses::*;
+use serde_json::Value;
 use signatures::sign;
 
 type Part = Vec<u8>;
@@ -86,6 +87,31 @@ impl<M: Mac> WireMessage<M> {
                 metadata,
                 content: serde_json::from_str(content_str)?,
             })),
+            "is_complete_reply" => {
+                let content_json: Value = serde_json::from_str(content_str)?;
+                let content = match content_json["status"] {
+                    Value::String(ref s) if s == "complete" => IsCompleteStatus::Complete,
+                    Value::String(ref s) if s == "invalid" => IsCompleteStatus::Invalid,
+                    Value::String(ref s) if s == "unknown" => IsCompleteStatus::Unknown,
+                    Value::String(ref s) if s == "incomplete" => {
+                        let indent_node = &content_json["indent"];
+                        let indent = String::from(
+                            indent_node
+                                .as_str()
+                                .ok_or(format_err!("response indent value empty"))?,
+                        );
+                        IsCompleteStatus::Incomplete(indent)
+                    }
+                    _ => unreachable!(),
+                };
+
+                Ok(Response::Shell(ShellResponse::IsComplete {
+                    header,
+                    parent_header,
+                    metadata,
+                    content: content,
+                }))
+            }
             "shutdown_reply" => Ok(Response::Shell(ShellResponse::Shutdown {
                 header,
                 parent_header,
@@ -573,6 +599,160 @@ mod tests {
                 assert_eq!(content.text, "10");
             }
             _ => unreachable!("Incorrect response type, should be Stream"),
+        }
+    }
+
+    #[test]
+    fn test_is_complete_into_packets() {
+        use crate::header::Header;
+        use serde_json::{json, Value};
+
+        let cmd = Command::IsComplete {
+            code: "a = 10".to_string(),
+        };
+        let auth = FakeAuth::create();
+        let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
+        let packets = wire.into_packets().expect("creating packets");
+
+        let mut packets = packets.into_iter();
+        let packet = packets.next().unwrap();
+        compare_bytestrings!(&packet, &DELIMITER);
+
+        let packet = packets.next().unwrap();
+        compare_bytestrings!(&packet, &expected_signature().as_bytes());
+
+        let packet = packets.next().unwrap();
+        let header_str = std::str::from_utf8(&packet).unwrap();
+        let header: Header = serde_json::from_str(header_str).unwrap();
+
+        assert_eq!(header.msg_type, "is_complete_request");
+
+        // The rest of the packet should be empty maps
+        let packet = packets.next().unwrap();
+        let parent_header_str = std::str::from_utf8(&packet).unwrap();
+        let parent_header: Value = serde_json::from_str(parent_header_str).unwrap();
+        assert_eq!(parent_header, json!({}));
+
+        let packet = packets.next().unwrap();
+        let metadata_str = std::str::from_utf8(&packet).unwrap();
+        let metadata: Value = serde_json::from_str(metadata_str).unwrap();
+        assert_eq!(metadata, json!({}));
+
+        let packet = packets.next().unwrap();
+        let content_str = std::str::from_utf8(&packet).unwrap();
+        let content: Value = serde_json::from_str(content_str).unwrap();
+        assert_eq!(
+            content,
+            json!({
+            "code": "a = 10",
+        })
+        );
+    }
+
+    #[test]
+    fn test_is_complete_message_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "is_complete_reply",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "is_complete_request",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "status": "complete"
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::Shell(ShellResponse::IsComplete {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            }) => {
+                // Check the header
+                assert_eq!(header.msg_type, "is_complete_reply");
+
+                // Check the content
+                assert_eq!(content, IsCompleteStatus::Complete);
+            }
+            _ => unreachable!("Incorrect response type, should be IsComplete"),
+        }
+    }
+
+    #[test]
+    fn test_is_complete_message_parsing_with_incomplete_reply() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "is_complete_reply",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "is_complete_request",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "status": "incomplete",
+                "indent": "  "
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::Shell(ShellResponse::IsComplete {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            }) => {
+                // Check the header
+                assert_eq!(header.msg_type, "is_complete_reply");
+
+                // Check the content
+                assert_eq!(content, IsCompleteStatus::Incomplete("  ".to_string()));
+            }
+            _ => unreachable!("Incorrect response type, should be IsComplete"),
         }
     }
 
