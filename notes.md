@@ -8,3 +8,51 @@ These are the steps to add a new Command/Response pair:
 - Add a new deserializable struct for response content
 - Add an entry to match the `msg_type` in `WireMessage::into_response`
 - Add `into_packets` and `message_parsing` tests in `wire.rs`
+
+# Messages requiring implementation
+
+## Client -> Kernel (SHELL)
+
+- [x] `kernel_info_request`
+- [x] `execute_request`
+- [x] `inspect_request`
+- [x] `complete_request`
+- [x] `history_request`
+- [x] `shutdown_request`
+- [ ] `is_complete_request`
+- [ ] `comm_info_request`
+- [ ] `interrupt_request`
+
+## Kernel -> Client (SHELL)
+
+- [x] `kernel_info_reply`
+- [x] `execute_reply`
+- [x] `inspect_reply`
+- [x] `complete_reply`
+- [x] `history_reply`
+- [x] `shutdown_reply`
+- [ ] `is_complete_reply`
+- [ ] `comm_info_reply`
+
+## Kernel -> Client (IOPUB)
+
+- [x] `stream`
+- [x] `status`
+- [x] `execute_input`
+- [x] `error`
+- [ ] `display_data`
+- [ ] `update_display_data`
+- [ ] `execute_result`
+- [ ] `clear_output`
+
+## Kernel -> Client (STDIN)
+
+- [ ] `input_request`
+
+## Client -> Kernel (STDIN)
+
+- [ ] `input_reply`
+
+## Kernel -> Client (CONTROL)
+
+- [ ] `interrupt_reply`

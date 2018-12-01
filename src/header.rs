@@ -1,3 +1,4 @@
+use chrono::Utc;
 use errors::Result;
 use serde_derive::{Deserialize, Serialize};
 
@@ -17,10 +18,9 @@ impl Header {
         S: Into<String>,
     {
         Header {
-            // TODO: now
-            date: "".to_string(),
+            date: format!("{:?}", Utc::now()),
             msg_id: msg_id(),
-            username: "kernel".to_string(),
+            username: "client".to_string(),
             session: "".to_string(),
             msg_type: msg_type.into(),
             version: "5.0".to_string(),

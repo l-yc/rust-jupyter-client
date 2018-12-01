@@ -1,3 +1,4 @@
+extern crate chrono;
 extern crate failure;
 extern crate hex;
 extern crate hmac;
@@ -17,15 +18,14 @@ extern crate digest;
 extern crate generic_array;
 
 mod client;
-mod commands;
+pub mod commands;
 mod connection_config;
 mod errors;
 mod header;
 mod metadata;
-mod responses;
+pub mod responses;
 mod signatures;
 mod socket;
 mod wire;
 
 pub use client::Client;
-pub use commands::Command;

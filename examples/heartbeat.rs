@@ -2,9 +2,7 @@ extern crate env_logger;
 extern crate jupyter_client;
 extern crate structopt;
 
-use jupyter_client::commands::Command;
 use jupyter_client::Client;
-use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -13,8 +11,6 @@ use structopt::StructOpt;
 struct Opt {
     #[structopt(parse(from_os_str))]
     filename: PathBuf,
-    #[structopt(name = "command", short = "c")]
-    command: String,
 }
 
 fn main() {
@@ -27,14 +23,8 @@ fn main() {
 
     let client = Client::from_reader(&file).expect("creating jupyter connection");
 
-    let command = Command::Execute {
-        code: args.command,
-        silent: false,
-        store_history: true,
-        user_expressions: HashMap::new(),
-        allow_stdin: true,
-        stop_on_error: false,
-    };
-    let response = client.send_shell_command(command).expect("sending command");
-    println!("Response: {:#?}", response);
+    let receiver = client.heartbeat().unwrap();
+    for msg in receiver.iter().take(5) {
+        println!("{:?}", msg);
+    }
 }

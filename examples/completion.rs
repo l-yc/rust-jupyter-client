@@ -13,8 +13,6 @@ use structopt::StructOpt;
 struct Opt {
     #[structopt(parse(from_os_str))]
     filename: PathBuf,
-    #[structopt(name = "command", short = "c")]
-    command: String,
 }
 
 fn main() {
@@ -27,13 +25,43 @@ fn main() {
 
     let client = Client::from_reader(&file).expect("creating jupyter connection");
 
-    let command = Command::Execute {
-        code: args.command,
+    // Set up some previous code
+    let code = r#"class Foo(object):
+    def bar(self):
+        return 10
+
+    def baz(self):
+        return 20
+"#.to_string();
+    let prep_cmd = Command::Execute {
+        code: code,
         silent: false,
         store_history: true,
         user_expressions: HashMap::new(),
         allow_stdin: true,
         stop_on_error: false,
+    };
+
+    client
+        .send_shell_command(prep_cmd)
+        .expect("sending command");
+
+    let prep_cmd = Command::Execute {
+        code: "a = Foo()".to_string(),
+        silent: false,
+        store_history: true,
+        user_expressions: HashMap::new(),
+        allow_stdin: true,
+        stop_on_error: false,
+    };
+
+    client
+        .send_shell_command(prep_cmd)
+        .expect("sending command");
+
+    let command = Command::Complete {
+        code: "a.".to_string(),
+        cursor_pos: 2,
     };
     let response = client.send_shell_command(command).expect("sending command");
     println!("Response: {:#?}", response);

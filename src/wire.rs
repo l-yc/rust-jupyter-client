@@ -1,5 +1,5 @@
 use errors::Result;
-use failure::bail;
+use failure::{bail, format_err};
 use header::Header;
 use hmac::Mac;
 use metadata::Metadata;
@@ -20,13 +20,14 @@ pub(crate) struct WireMessage<M: Mac> {
 
 impl<M: Mac> WireMessage<M> {
     pub(crate) fn from_raw_response(raw: Vec<Vec<u8>>, auth: M) -> Result<Self> {
-        // TODO: short sighted
-        assert_eq!(raw.len(), 6);
-        assert_eq!(&raw[0], &DELIMITER);
+        let delim_idx = raw
+            .iter()
+            .position(|r| String::from_utf8(r.to_vec()).unwrap() == "<IDS|MSG>")
+            .ok_or_else(|| format_err!("cannot find delimiter in response"))?;
 
         // Check the signature
-        let signature = String::from_utf8_lossy(&raw[1]);
-        let msg_frames = &raw[2..];
+        let signature = String::from_utf8_lossy(&raw[delim_idx + 1]);
+        let msg_frames = &raw[delim_idx + 2..];
         let check_sig = sign(msg_frames, auth.clone());
 
         if check_sig != signature {
@@ -55,24 +56,66 @@ impl<M: Mac> WireMessage<M> {
         let content_str = std::str::from_utf8(&self.content)?;
 
         match header.msg_type.as_str() {
-            "kernel_info_reply" => {
-                let content: KernelInfoContent = serde_json::from_str(content_str)?;
-                Ok(Response::KernelInfo {
-                    header,
-                    parent_header,
-                    metadata,
-                    content,
-                })
-            }
-            "execute_reply" => {
-                let content: ExecuteReplyContent = serde_json::from_str(content_str)?;
-                Ok(Response::Execute {
-                    header,
-                    parent_header,
-                    metadata,
-                    content,
-                })
-            }
+            "kernel_info_reply" => Ok(Response::Shell(ShellResponse::KernelInfo {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
+            "execute_reply" => Ok(Response::Shell(ShellResponse::Execute {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
+            "inspect_reply" => Ok(Response::Shell(ShellResponse::Inspect {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
+            "complete_reply" => Ok(Response::Shell(ShellResponse::Complete {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
+            "history_reply" => Ok(Response::Shell(ShellResponse::History {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
+            "shutdown_reply" => Ok(Response::Shell(ShellResponse::Shutdown {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
+            "status" => Ok(Response::IoPub(IoPubResponse::Status {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
+            "execute_input" => Ok(Response::IoPub(IoPubResponse::ExecuteInput {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
+            "stream" => Ok(Response::IoPub(IoPubResponse::Stream {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
+            "error" => Ok(Response::IoPub(IoPubResponse::Error {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
             _ => unreachable!("{}", header.msg_type),
         }
     }
@@ -222,7 +265,7 @@ mod tests {
                 "implementation": "implementation",
                 "implementation_version": "implementation_version",
                 "protocol_version": "protocol_version",
-                "status": "status",
+                "status": "ok",
                 "help_links": [{"text": "text", "url": "url"}]
             }"#.to_string()
             .into_bytes(),
@@ -230,12 +273,12 @@ mod tests {
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
         let response = msg.into_response().unwrap();
         match response {
-            Response::KernelInfo {
+            Response::Shell(ShellResponse::KernelInfo {
                 header,
                 parent_header: _parent_header,
                 metadata: _metadata,
                 content,
-            } => {
+            }) => {
                 // Check the header
                 assert_eq!(header.msg_type, "kernel_info_reply");
 
@@ -244,7 +287,7 @@ mod tests {
                 assert_eq!(content.implementation, "implementation");
                 assert_eq!(content.implementation_version, "implementation_version");
                 assert_eq!(content.protocol_version, "protocol_version");
-                assert_eq!(content.status, "status");
+                assert_eq!(content.status, Status::Ok);
                 assert_eq!(
                     content.help_links,
                     vec![HelpLink {
@@ -263,7 +306,7 @@ mod tests {
         use serde_json::{json, Value};
         use std::collections::HashMap;
 
-        let cmd = Command::ExecuteRequest {
+        let cmd = Command::Execute {
             code: "a = 10".to_string(),
             silent: false,
             store_history: true,
@@ -305,13 +348,13 @@ mod tests {
         assert_eq!(
             content,
             json!({
-            "code": "a = 10",
-            "silent": false,
-            "store_history": true,
-            "user_expressions": {},
-            "allow_stdin": true,
-            "stop_on_error": false,
-        })
+                "code": "a = 10",
+                "silent": false,
+                "store_history": true,
+                "user_expressions": {},
+                "allow_stdin": true,
+                "stop_on_error": false,
+            })
         );
     }
 
@@ -353,18 +396,279 @@ mod tests {
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
         let response = msg.into_response().unwrap();
         match response {
-            Response::Execute {
+            Response::Shell(ShellResponse::Execute {
                 header,
                 parent_header: _parent_header,
                 metadata: _metadata,
                 content,
-            } => {
+            }) => {
                 // Check the header
                 assert_eq!(header.msg_type, "execute_reply");
 
                 // Check the content
-                assert_eq!(content.status, "ok");
+                assert_eq!(content.status, Status::Ok);
                 assert_eq!(content.execution_count, 4);
+            }
+            _ => unreachable!("Incorrect response type, should be KernelInfo"),
+        }
+    }
+
+    #[test]
+    fn test_status_message_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "status",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header, not relevant
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "execute_request",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "execution_state": "busy"
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::IoPub(IoPubResponse::Status {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            }) => {
+                // Check the header
+                assert_eq!(header.msg_type, "status");
+
+                // Check the content
+                assert_eq!(content.execution_state, ExecutionState::Busy);
+            }
+            _ => unreachable!("Incorrect response type, should be Status"),
+        }
+    }
+
+    #[test]
+    fn test_execute_input_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "execute_input",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header, not relevant
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "code": "a = 10",
+                "execution_count": 4
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::IoPub(IoPubResponse::ExecuteInput {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            }) => {
+                // Check the header
+                assert_eq!(header.msg_type, "execute_input");
+
+                // Check the content
+                assert_eq!(content.code, "a = 10");
+                assert_eq!(content.execution_count, 4);
+            }
+            _ => unreachable!("Incorrect response type, should be Status"),
+        }
+    }
+
+    #[test]
+    fn test_stream_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "stream",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header, not relevant
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "name": "stdout",
+                "text": "10"
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::IoPub(IoPubResponse::Stream {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            }) => {
+                // Check the header
+                assert_eq!(header.msg_type, "stream");
+
+                // Check the content
+                assert_eq!(content.name, StreamType::Stdout);
+                assert_eq!(content.text, "10");
+            }
+            _ => unreachable!("Incorrect response type, should be Stream"),
+        }
+    }
+
+    #[test]
+    fn test_shutdown_into_packets() {
+        use crate::header::Header;
+        use serde_json::{json, Value};
+
+        let cmd = Command::Shutdown { restart: false };
+        let auth = FakeAuth::create();
+        let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
+        let packets = wire.into_packets().expect("creating packets");
+
+        let mut packets = packets.into_iter();
+        let packet = packets.next().unwrap();
+        compare_bytestrings!(&packet, &DELIMITER);
+
+        let packet = packets.next().unwrap();
+        compare_bytestrings!(&packet, &expected_signature().as_bytes());
+
+        let packet = packets.next().unwrap();
+        let header_str = std::str::from_utf8(&packet).unwrap();
+        let header: Header = serde_json::from_str(header_str).unwrap();
+
+        assert_eq!(header.msg_type, "shutdown_request");
+
+        // The rest of the packet should be empty maps
+        let packet = packets.next().unwrap();
+        let parent_header_str = std::str::from_utf8(&packet).unwrap();
+        let parent_header: Value = serde_json::from_str(parent_header_str).unwrap();
+        assert_eq!(parent_header, json!({}));
+
+        let packet = packets.next().unwrap();
+        let metadata_str = std::str::from_utf8(&packet).unwrap();
+        let metadata: Value = serde_json::from_str(metadata_str).unwrap();
+        assert_eq!(metadata, json!({}));
+
+        let packet = packets.next().unwrap();
+        let content_str = std::str::from_utf8(&packet).unwrap();
+        let content: Value = serde_json::from_str(content_str).unwrap();
+        assert_eq!(
+            content,
+            json!({
+            "restart": false,
+        })
+        );
+    }
+
+    #[test]
+    fn test_shutdown_message_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "shutdown_reply",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "kernel_info_request",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "restart": false
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::Shell(ShellResponse::Shutdown {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            }) => {
+                // Check the header
+                assert_eq!(header.msg_type, "shutdown_reply");
+
+                // Check the content
+                assert_eq!(content.restart, false);
             }
             _ => unreachable!("Incorrect response type, should be KernelInfo"),
         }
