@@ -48,6 +48,12 @@ pub enum ShellResponse {
         metadata: Metadata,
         content: HistoryContent,
     },
+    IsComplete {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: IsCompleteStatus,
+    },
 }
 
 #[derive(Debug)]
@@ -153,6 +159,15 @@ pub struct CompleteContent {
 #[derive(Deserialize, Debug)]
 pub struct HistoryContent {
     pub history: Vec<Value>,
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum IsCompleteStatus {
+    Complete,
+    Incomplete(String), // argument is the indent value
+    Invalid,
+    Unknown,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
