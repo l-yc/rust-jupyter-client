@@ -12,7 +12,12 @@ pub struct HelpLink {
 
 #[derive(Debug)]
 pub enum Response {
-    // Shell responses
+    Shell(ShellResponse),
+    IoPub(IoPubResponse),
+}
+
+#[derive(Debug)]
+pub enum ShellResponse {
     KernelInfo {
         header: Header,
         parent_header: Header,
@@ -43,7 +48,10 @@ pub enum Response {
         metadata: Metadata,
         content: HistoryContent,
     },
-    // IOPub responses
+}
+
+#[derive(Debug)]
+pub enum IoPubResponse {
     Status {
         header: Header,
         parent_header: Header,

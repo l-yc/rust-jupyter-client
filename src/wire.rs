@@ -56,60 +56,60 @@ impl<M: Mac> WireMessage<M> {
         let content_str = std::str::from_utf8(&self.content)?;
 
         match header.msg_type.as_str() {
-            "kernel_info_reply" => Ok(Response::KernelInfo {
+            "kernel_info_reply" => Ok(Response::Shell(ShellResponse::KernelInfo {
                 header,
                 parent_header,
                 metadata,
                 content: serde_json::from_str(content_str)?,
-            }),
-            "execute_reply" => Ok(Response::Execute {
+            })),
+            "execute_reply" => Ok(Response::Shell(ShellResponse::Execute {
                 header,
                 parent_header,
                 metadata,
                 content: serde_json::from_str(content_str)?,
-            }),
-            "status" => Ok(Response::Status {
+            })),
+            "inspect_reply" => Ok(Response::Shell(ShellResponse::Inspect {
                 header,
                 parent_header,
                 metadata,
                 content: serde_json::from_str(content_str)?,
-            }),
-            "execute_input" => Ok(Response::ExecuteInput {
+            })),
+            "complete_reply" => Ok(Response::Shell(ShellResponse::Complete {
                 header,
                 parent_header,
                 metadata,
                 content: serde_json::from_str(content_str)?,
-            }),
-            "stream" => Ok(Response::Stream {
+            })),
+            "history_reply" => Ok(Response::Shell(ShellResponse::History {
                 header,
                 parent_header,
                 metadata,
                 content: serde_json::from_str(content_str)?,
-            }),
-            "error" => Ok(Response::Error {
+            })),
+            "status" => Ok(Response::IoPub(IoPubResponse::Status {
                 header,
                 parent_header,
                 metadata,
                 content: serde_json::from_str(content_str)?,
-            }),
-            "inspect_reply" => Ok(Response::Inspect {
+            })),
+            "execute_input" => Ok(Response::IoPub(IoPubResponse::ExecuteInput {
                 header,
                 parent_header,
                 metadata,
                 content: serde_json::from_str(content_str)?,
-            }),
-            "complete_reply" => Ok(Response::Complete {
+            })),
+            "stream" => Ok(Response::IoPub(IoPubResponse::Stream {
                 header,
                 parent_header,
                 metadata,
                 content: serde_json::from_str(content_str)?,
-            }),
-            "history_reply" => Ok(Response::History {
+            })),
+            "error" => Ok(Response::IoPub(IoPubResponse::Error {
                 header,
                 parent_header,
                 metadata,
                 content: serde_json::from_str(content_str)?,
-            }),
+            })),
             _ => unreachable!("{}", header.msg_type),
         }
     }
@@ -267,12 +267,12 @@ mod tests {
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
         let response = msg.into_response().unwrap();
         match response {
-            Response::KernelInfo {
+            Response::Shell(ShellResponse::KernelInfo {
                 header,
                 parent_header: _parent_header,
                 metadata: _metadata,
                 content,
-            } => {
+            }) => {
                 // Check the header
                 assert_eq!(header.msg_type, "kernel_info_reply");
 
@@ -390,12 +390,12 @@ mod tests {
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
         let response = msg.into_response().unwrap();
         match response {
-            Response::Execute {
+            Response::Shell(ShellResponse::Execute {
                 header,
                 parent_header: _parent_header,
                 metadata: _metadata,
                 content,
-            } => {
+            }) => {
                 // Check the header
                 assert_eq!(header.msg_type, "execute_reply");
 
@@ -444,12 +444,12 @@ mod tests {
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
         let response = msg.into_response().unwrap();
         match response {
-            Response::Status {
+            Response::IoPub(IoPubResponse::Status {
                 header,
                 parent_header: _parent_header,
                 metadata: _metadata,
                 content,
-            } => {
+            }) => {
                 // Check the header
                 assert_eq!(header.msg_type, "status");
 
@@ -498,12 +498,12 @@ mod tests {
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
         let response = msg.into_response().unwrap();
         match response {
-            Response::ExecuteInput {
+            Response::IoPub(IoPubResponse::ExecuteInput {
                 header,
                 parent_header: _parent_header,
                 metadata: _metadata,
                 content,
-            } => {
+            }) => {
                 // Check the header
                 assert_eq!(header.msg_type, "execute_input");
 
@@ -553,12 +553,12 @@ mod tests {
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
         let response = msg.into_response().unwrap();
         match response {
-            Response::Stream {
+            Response::IoPub(IoPubResponse::Stream {
                 header,
                 parent_header: _parent_header,
                 metadata: _metadata,
                 content,
-            } => {
+            }) => {
                 // Check the header
                 assert_eq!(header.msg_type, "stream");
 

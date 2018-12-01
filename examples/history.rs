@@ -2,8 +2,8 @@ extern crate env_logger;
 extern crate jupyter_client;
 extern crate structopt;
 
-use jupyter_client::commands::HistoryAccessType;
-use jupyter_client::{Client, Command};
+use jupyter_client::commands::{Command, HistoryAccessType};
+use jupyter_client::Client;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;

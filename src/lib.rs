@@ -23,11 +23,9 @@ mod connection_config;
 mod errors;
 mod header;
 mod metadata;
-mod responses;
+pub mod responses;
 mod signatures;
 mod socket;
 mod wire;
 
 pub use client::Client;
-pub use commands::Command;
-pub use responses::Response;

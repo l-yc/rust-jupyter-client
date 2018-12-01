@@ -2,8 +2,9 @@ extern crate env_logger;
 extern crate jupyter_client;
 extern crate structopt;
 
-use jupyter_client::commands::DetailLevel;
-use jupyter_client::{Client, Command, Response};
+use jupyter_client::commands::{Command, DetailLevel};
+use jupyter_client::responses::{Response, ShellResponse};
+use jupyter_client::Client;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
@@ -65,7 +66,7 @@ fn main() {
     println!("Response: {:#?}", response);
 
     // Get some more detail and print the help
-    if let Response::Inspect { content, .. } = response {
+    if let Response::Shell(ShellResponse::Inspect { content, .. }) = response {
         println!(
             "\nHelp:\n\n{}",
             content.data["text/plain"].as_str().unwrap()
