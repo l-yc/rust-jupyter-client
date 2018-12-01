@@ -1,0 +1,44 @@
+#!/bin/bash
+
+set -e
+
+source $(dirname $0)/vars.sh
+
+has_executable() {
+    if [[ $# != 1 ]]; then
+        echo "has_executable requires one argument" >&2
+        return 1
+    fi
+
+    command -v $1 >/dev/null 2>/dev/null
+}
+
+setup_venv() {
+    if [ ! -d ${VENV_DIR} ]; then
+        echo "Setting up python environment in ${VENV_DIR}" >&2
+
+        if has_executable python3; then
+            python3 -m venv ${VENV_DIR}
+        elif has_executable virtualenv; then
+            virtualenv ${VENV_DIR}
+        else
+            echo "Cannot find virtualenv compatible system installed. This setup script will not automatically work. Ensure you can start a jupyter kernel with 'jupyter kernel'" >&2
+            exit 1
+        fi
+    fi
+}
+
+install_jupyter() {
+    if [ ! -f ${JUPYTER} ]; then
+        echo "Installing jupyter to virtualenv" >&2
+
+        ${PYTHON} -m pip install jupyter
+    fi
+}
+
+main() {
+    setup_venv
+    install_jupyter
+}
+
+main
