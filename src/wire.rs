@@ -342,13 +342,13 @@ mod tests {
         assert_eq!(
             content,
             json!({
-            "code": "a = 10",
-            "silent": false,
-            "store_history": true,
-            "user_expressions": {},
-            "allow_stdin": true,
-            "stop_on_error": false,
-        })
+                "code": "a = 10",
+                "silent": false,
+                "store_history": true,
+                "user_expressions": {},
+                "allow_stdin": true,
+                "stop_on_error": false,
+            })
         );
     }
 

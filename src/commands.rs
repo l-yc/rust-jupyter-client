@@ -103,16 +103,16 @@ impl Command {
 
                 let content = match hist_access_type {
                     HistoryAccessType::Tail { n } => json!({
-                            "output": output,
-                            "raw": raw,
-                            "unique": unique,
-                            "hist_access_type": "tail",
-                            "session": null,
-                            "start": null,
-                            "stop": null,
-                            "n": n,
-                            "pattern": null,
-                        }),
+                        "output": output,
+                        "raw": raw,
+                        "unique": unique,
+                        "hist_access_type": "tail",
+                        "session": null,
+                        "start": null,
+                        "stop": null,
+                        "n": n,
+                        "pattern": null,
+                    }),
                     HistoryAccessType::Range {
                         session,
                         start,
