@@ -34,6 +34,9 @@ pub enum Command {
         hist_access_type: HistoryAccessType,
         unique: bool,
     },
+    Shutdown {
+        restart: bool,
+    },
 }
 
 impl Command {
@@ -142,6 +145,23 @@ impl Command {
                 };
 
                 let content_str = serde_json::to_string(&content)?;
+                let content = content_str.into_bytes();
+
+                Ok(WireMessage {
+                    header: header_bytes.to_vec(),
+                    parent_header: b"{}".to_vec(),
+                    metadata: b"{}".to_vec(),
+                    content,
+                    auth,
+                })
+            }
+            Command::Shutdown { restart } => {
+                let header = Header::new("shutdown_request");
+                let header_bytes = header.to_bytes()?;
+                let content_json = json!({
+                    "restart": restart,
+                });
+                let content_str = serde_json::to_string(&content_json)?;
                 let content = content_str.into_bytes();
 
                 Ok(WireMessage {
