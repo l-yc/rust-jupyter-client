@@ -12,6 +12,7 @@ pub struct HelpLink {
 
 #[derive(Debug)]
 pub enum Response {
+    // Shell responses
     KernelInfo {
         header: Header,
         parent_header: Header,
@@ -24,6 +25,25 @@ pub enum Response {
         metadata: Metadata,
         content: ExecuteReplyContent,
     },
+    Inspect {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: InspectContent,
+    },
+    Complete {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: CompleteContent,
+    },
+    History {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: HistoryContent,
+    },
+    // IOPub responses
     Status {
         header: Header,
         parent_header: Header,
@@ -47,24 +67,6 @@ pub enum Response {
         parent_header: Header,
         metadata: Metadata,
         content: ErrorContent,
-    },
-    Inspect {
-        header: Header,
-        parent_header: Header,
-        metadata: Metadata,
-        content: InspectContent,
-    },
-    Complete {
-        header: Header,
-        parent_header: Header,
-        metadata: Metadata,
-        content: CompleteContent,
-    },
-    History {
-        header: Header,
-        parent_header: Header,
-        metadata: Metadata,
-        content: HistoryContent,
     },
 }
 

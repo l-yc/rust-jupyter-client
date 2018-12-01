@@ -58,7 +58,7 @@ fn main() {
         .send_shell_command(prep_cmd)
         .expect("sending command");
 
-    let command = Command::Completion {
+    let command = Command::Complete {
         code: "a.".to_string(),
         cursor_pos: 2,
     };

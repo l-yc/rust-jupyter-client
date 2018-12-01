@@ -24,7 +24,7 @@ pub enum Command {
         cursor_pos: u64,
         detail_level: DetailLevel,
     },
-    Completion {
+    Complete {
         code: String,
         cursor_pos: u64,
     },
@@ -78,7 +78,7 @@ impl Command {
                     auth,
                 })
             }
-            r @ Command::Completion { .. } => {
+            r @ Command::Complete { .. } => {
                 let header = Header::new("complete_request");
                 let header_bytes = header.to_bytes()?;
                 let content_str = serde_json::to_string(&r)?;
