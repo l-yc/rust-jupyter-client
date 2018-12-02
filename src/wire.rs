@@ -30,7 +30,13 @@ impl<M: Mac + Debug> WireMessage<M> {
             .position(|r| String::from_utf8(r.to_vec()).unwrap() == "<IDS|MSG>")
             .ok_or_else(|| format_err!("cannot find delimiter in response"))?;
 
-        debug!("identities: {:#?}", &raw[..delim_idx]);
+        debug!(
+            "identities: {:#?}",
+            raw[..delim_idx]
+                .iter()
+                .map(|b| std::str::from_utf8(b))
+                .collect::<Vec<_>>()
+        );
 
         // Check the signature
         let signature = String::from_utf8_lossy(&raw[delim_idx + 1]);
