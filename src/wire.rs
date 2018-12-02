@@ -72,7 +72,7 @@ impl<M: Mac + Debug> WireMessage<M> {
         let content_str = std::str::from_utf8(&self.content)?;
         trace!("content string: {}", content_str);
 
-        debug!("received message type {}", &header.msg_type);
+        debug!("received message type `{}`", &header.msg_type);
         match header.msg_type.as_str() {
             "kernel_info_reply" => Ok(Response::Shell(ShellResponse::KernelInfo {
                 header,

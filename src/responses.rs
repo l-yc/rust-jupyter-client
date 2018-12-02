@@ -140,7 +140,6 @@ pub struct InspectContent {
 
 #[derive(Deserialize, Debug)]
 pub struct StreamContent {
-    pub status: Status,
     pub name: StreamType,
     pub text: String,
 }
