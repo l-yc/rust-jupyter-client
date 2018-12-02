@@ -25,6 +25,6 @@ fn main() {
 
     let receiver = client.iopub_subscribe().unwrap();
     for msg in receiver {
-        println!("{:?}", msg);
+        println!("{:#?}", msg);
     }
 }
