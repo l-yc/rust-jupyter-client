@@ -40,6 +40,9 @@ pub enum Command {
     Shutdown {
         restart: bool,
     },
+    CommInfo {
+        target_name: Option<String>,
+    },
 }
 
 impl Command {
@@ -182,6 +185,26 @@ impl Command {
                 let content_json = json!({
                     "restart": restart,
                 });
+                let content_str = serde_json::to_string(&content_json)?;
+                let content = content_str.into_bytes();
+
+                Ok(WireMessage {
+                    header: header_bytes.to_vec(),
+                    parent_header: b"{}".to_vec(),
+                    metadata: b"{}".to_vec(),
+                    content,
+                    auth,
+                })
+            }
+            Command::CommInfo { target_name } => {
+                let header = Header::new("comm_info_request");
+                let header_bytes = header.to_bytes()?;
+                let content_json = match target_name {
+                    Some(target_name) => json!({
+                        "target_name": target_name,
+                    }),
+                    None => json!({}),
+                };
                 let content_str = serde_json::to_string(&content_json)?;
                 let content = content_str.into_bytes();
 

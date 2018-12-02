@@ -60,6 +60,12 @@ pub enum ShellResponse {
         metadata: Metadata,
         content: ShutdownContent,
     },
+    CommInfo {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: CommInfoContent,
+    },
 }
 
 #[derive(Debug)]
@@ -170,6 +176,11 @@ pub struct HistoryContent {
 #[derive(Deserialize, Debug)]
 pub struct ShutdownContent {
     pub restart: bool,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CommInfoContent {
+    pub comms: HashMap<String, HashMap<String, String>>,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
