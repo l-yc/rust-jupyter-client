@@ -1,10 +1,12 @@
 use errors::Result;
 use header::Header;
 use hmac::Mac;
+use log::trace;
 use serde::{Serialize as SerdeSerialize, Serializer};
 use serde_derive::Serialize;
 use serde_json::json;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use wire::WireMessage;
 
 #[derive(Serialize, Debug)]
@@ -46,8 +48,8 @@ pub enum Command {
 }
 
 impl Command {
-    pub(crate) fn into_wire<M: Mac>(self, auth: M) -> Result<WireMessage<M>> {
-        match self {
+    pub(crate) fn into_wire<M: Mac + Debug>(self, auth: M) -> Result<WireMessage<M>> {
+        let msg = match self {
             Command::KernelInfo => {
                 let header = Header::new("kernel_info_request");
                 let header_bytes = header.to_bytes()?;
@@ -216,7 +218,10 @@ impl Command {
                     auth,
                 })
             }
-        }
+        };
+
+        trace!("creating message {:?}", msg);
+        msg
     }
 }
 

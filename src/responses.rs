@@ -121,13 +121,11 @@ pub struct ExecuteReplyContent {
 
 #[derive(Deserialize, Debug)]
 pub struct StatusContent {
-    pub status: Status,
     pub execution_state: ExecutionState,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct ExecuteInputContent {
-    pub status: Status,
     pub code: String,
     pub execution_count: i64,
 }
