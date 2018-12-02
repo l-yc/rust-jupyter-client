@@ -60,6 +60,12 @@ pub enum ShellResponse {
         metadata: Metadata,
         content: ShutdownContent,
     },
+    CommInfo {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: CommInfoContent,
+    },
 }
 
 #[derive(Debug)]
@@ -115,19 +121,13 @@ pub struct ExecuteReplyContent {
 
 #[derive(Deserialize, Debug)]
 pub struct StatusContent {
+    pub status: Status,
     pub execution_state: ExecutionState,
-}
-
-#[derive(Deserialize, Debug, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum ExecutionState {
-    Busy,
-    Idle,
-    Starting,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct ExecuteInputContent {
+    pub status: Status,
     pub code: String,
     pub execution_count: i64,
 }
@@ -142,12 +142,14 @@ pub struct InspectContent {
 
 #[derive(Deserialize, Debug)]
 pub struct StreamContent {
+    pub status: Status,
     pub name: StreamType,
     pub text: String,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct ErrorContent {
+    pub status: Status,
     pub ename: String,
     pub evalue: String,
     pub traceback: Vec<String>,
@@ -155,21 +157,37 @@ pub struct ErrorContent {
 
 #[derive(Deserialize, Debug)]
 pub struct CompleteContent {
+    pub status: Status,
     pub matches: Vec<String>,
     pub cursor_start: u64,
     pub cursor_end: u64,
     pub metadata: HashMap<String, Value>,
-    pub status: Status,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct HistoryContent {
+    pub status: Status,
     pub history: Vec<Value>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct ShutdownContent {
+    pub status: Status,
     pub restart: bool,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CommInfoContent {
+    pub status: Status,
+    pub comms: HashMap<String, HashMap<String, String>>,
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum ExecutionState {
+    Busy,
+    Idle,
+    Starting,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]

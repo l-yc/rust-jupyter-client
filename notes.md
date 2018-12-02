@@ -20,7 +20,7 @@ These are the steps to add a new Command/Response pair:
 - [x] `history_request`
 - [x] `is_complete_request`
 - [x] `shutdown_request`
-- [ ] `comm_info_request`
+- [x] `comm_info_request`
 - [ ] `interrupt_request`
 
 ## Kernel -> Client (SHELL)
@@ -32,7 +32,7 @@ These are the steps to add a new Command/Response pair:
 - [x] `history_reply`
 - [x] `is_complete_reply`
 - [x] `shutdown_reply`
-- [ ] `comm_info_reply`
+- [x] `comm_info_reply`
 
 ## Kernel -> Client (IOPUB)
 

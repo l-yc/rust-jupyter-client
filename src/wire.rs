@@ -118,6 +118,12 @@ impl<M: Mac> WireMessage<M> {
                 metadata,
                 content: serde_json::from_str(content_str)?,
             })),
+            "comm_info_reply" => Ok(Response::Shell(ShellResponse::CommInfo {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
             "status" => Ok(Response::IoPub(IoPubResponse::Status {
                 header,
                 parent_header,
@@ -469,6 +475,7 @@ mod tests {
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
+                "status": "ok",
                 "execution_state": "busy"
             }"#.to_string()
             .into_bytes(),
@@ -522,6 +529,7 @@ mod tests {
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
+                "status": "ok",
                 "code": "a = 10",
                 "execution_count": 4
             }"#.to_string()
@@ -577,6 +585,7 @@ mod tests {
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
+                "status": "ok",
                 "name": "stdout",
                 "text": "10"
             }"#.to_string()
@@ -831,6 +840,7 @@ mod tests {
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
+                "status": "ok",
                 "restart": false
             }"#.to_string()
             .into_bytes(),
@@ -851,6 +861,104 @@ mod tests {
                 assert_eq!(content.restart, false);
             }
             _ => unreachable!("Incorrect response type, should be KernelInfo"),
+        }
+    }
+
+    #[test]
+    fn test_comm_info_packets() {
+        use crate::header::Header;
+        use serde_json::{json, Value};
+
+        let cmd = Command::CommInfo { target_name: None };
+        let auth = FakeAuth::create();
+        let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
+        let packets = wire.into_packets().expect("creating packets");
+
+        let mut packets = packets.into_iter();
+        let packet = packets.next().unwrap();
+        compare_bytestrings!(&packet, &DELIMITER);
+
+        let packet = packets.next().unwrap();
+        compare_bytestrings!(&packet, &expected_signature().as_bytes());
+
+        let packet = packets.next().unwrap();
+        let header_str = std::str::from_utf8(&packet).unwrap();
+        let header: Header = serde_json::from_str(header_str).unwrap();
+
+        assert_eq!(header.msg_type, "comm_info_request");
+
+        // The rest of the packet should be empty maps
+        let packet = packets.next().unwrap();
+        let parent_header_str = std::str::from_utf8(&packet).unwrap();
+        let parent_header: Value = serde_json::from_str(parent_header_str).unwrap();
+        assert_eq!(parent_header, json!({}));
+
+        let packet = packets.next().unwrap();
+        let metadata_str = std::str::from_utf8(&packet).unwrap();
+        let metadata: Value = serde_json::from_str(metadata_str).unwrap();
+        assert_eq!(metadata, json!({}));
+
+        let packet = packets.next().unwrap();
+        let content_str = std::str::from_utf8(&packet).unwrap();
+        let content: Value = serde_json::from_str(content_str).unwrap();
+        assert_eq!(content, json!({}));
+    }
+
+    #[test]
+    fn test_comm_info_message_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "comm_info_reply",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "comm_info_request",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "status": "ok",
+                "comms": {
+                    "u-u-i-d": {
+                        "target_name": "foobar"
+                    }
+                }
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::Shell(ShellResponse::CommInfo {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            }) => {
+                // Check the header
+                assert_eq!(header.msg_type, "comm_info_reply");
+
+                // Check the content
+                assert_eq!(content.comms["u-u-i-d"]["target_name"], "foobar");
+            }
+            _ => unreachable!("Incorrect response type, should be CommInfo"),
         }
     }
 }
