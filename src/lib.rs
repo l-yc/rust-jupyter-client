@@ -1,5 +1,7 @@
 extern crate chrono;
+extern crate dirs;
 extern crate failure;
+extern crate glob;
 extern crate hex;
 extern crate hmac;
 extern crate log;
@@ -23,6 +25,7 @@ mod connection_config;
 mod errors;
 mod header;
 mod metadata;
+mod paths;
 pub mod responses;
 mod signatures;
 mod socket;
