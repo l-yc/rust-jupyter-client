@@ -3,7 +3,7 @@ use connection_config::ConnectionConfig;
 use errors::Result;
 use failure::format_err;
 use hmac::Mac;
-use log::{debug, trace};
+use log::debug;
 use responses::Response;
 use signatures::HmacSha256;
 use std::io::Read;
@@ -12,22 +12,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use socket::{Socket, SocketType};
-
-fn connection_string(config: &ConnectionConfig, socket_type: SocketType) -> String {
-    let port = match socket_type {
-        SocketType::Shell => config.shell_port,
-        SocketType::IoPub => config.iopub_port,
-        SocketType::Heartbeat => config.hb_port,
-    };
-
-    format!(
-        "{transport}://{ip}:{port}",
-        transport = config.transport,
-        ip = config.ip,
-        port = port
-    )
-}
+use socket::Socket;
 
 pub struct Client {
     shell_socket: Socket,
@@ -47,25 +32,14 @@ impl Client {
 
         let ctx = zmq::Context::new();
 
-        // Set up the sockets
-        trace!("shell port: {}", config.shell_port);
-        let shell_socket = ctx.socket(zmq::REQ)?;
-        shell_socket.connect(&connection_string(&config, SocketType::Shell))?;
-
-        // Set up iopub socket
-        trace!("iopub port: {}", config.iopub_port);
-        let iopub_socket = ctx.socket(zmq::SUB)?;
-        iopub_socket.connect(&connection_string(&config, SocketType::IoPub))?;
-        iopub_socket.set_subscribe("".as_bytes())?;
-
-        trace!("heartbeat port: {}", config.hb_port);
-        let heartbeat_socket = ctx.socket(zmq::REQ)?;
-        heartbeat_socket.connect(&connection_string(&config, SocketType::Heartbeat))?;
+        let shell_socket = Socket::new_shell(&ctx, &config)?;
+        let iopub_socket = Socket::new_iopub(&ctx, &config)?;
+        let heartbeat_socket = Socket::new_heartbeat(&ctx, &config)?;
 
         Ok(Client {
-            shell_socket: Socket(shell_socket),
-            iopub_socket: Arc::new(Mutex::new(Socket(iopub_socket))),
-            heartbeat_socket: Arc::new(Mutex::new(Socket(heartbeat_socket))),
+            shell_socket,
+            iopub_socket: Arc::new(Mutex::new(iopub_socket)),
+            heartbeat_socket: Arc::new(Mutex::new(heartbeat_socket)),
             auth: auth,
         })
     }

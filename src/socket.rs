@@ -1,3 +1,4 @@
+use connection_config::ConnectionConfig;
 use errors::Result;
 use hmac::Mac;
 use wire::WireMessage;
@@ -12,6 +13,31 @@ pub(crate) enum SocketType {
 pub(crate) struct Socket(pub zmq::Socket);
 
 impl Socket {
+    pub fn new_shell(ctx: &zmq::Context, config: &ConnectionConfig) -> Result<Socket> {
+        let socket = ctx.socket(zmq::REQ)?;
+        let conn_str = Socket::connection_string(config, SocketType::Shell);
+        socket.connect(&conn_str)?;
+
+        Ok(Socket(socket))
+    }
+
+    pub fn new_iopub(ctx: &zmq::Context, config: &ConnectionConfig) -> Result<Socket> {
+        let socket = ctx.socket(zmq::SUB)?;
+        let conn_str = Socket::connection_string(config, SocketType::IoPub);
+        socket.connect(&conn_str)?;
+        socket.set_subscribe("".as_bytes())?;
+
+        Ok(Socket(socket))
+    }
+
+    pub fn new_heartbeat(ctx: &zmq::Context, config: &ConnectionConfig) -> Result<Socket> {
+        let socket = ctx.socket(zmq::REQ)?;
+        let conn_str = Socket::connection_string(config, SocketType::Heartbeat);
+        socket.connect(&conn_str)?;
+
+        Ok(Socket(socket))
+    }
+
     pub(crate) fn send_wire<M: Mac>(&self, wire: WireMessage<M>) -> Result<()> {
         let packets = wire.into_packets()?;
         let slices: Vec<_> = packets.iter().map(|v| v.as_slice()).collect();
@@ -29,13 +55,19 @@ impl Socket {
         let _msg = self.0.recv_msg(0)?;
         Ok(())
     }
+
+    fn connection_string(config: &ConnectionConfig, socket_type: SocketType) -> String {
+        let port = match socket_type {
+            SocketType::Shell => config.shell_port,
+            SocketType::IoPub => config.iopub_port,
+            SocketType::Heartbeat => config.hb_port,
+        };
+
+        format!(
+            "{transport}://{ip}:{port}",
+            transport = config.transport,
+            ip = config.ip,
+            port = port
+        )
+    }
 }
-
-// #[derive(Clone)]
-// pub(crate) struct IoPubSocket(pub Arc<Mutex<Socket>>);
-
-// impl IoPubSocket {
-//     pub(crate) fn recv_wire<M: Mac>(&self, auth: M) -> Result<WireMessage<M>> {
-//         self.0.lock()?.recv_wire(auth)
-//     }
-// }
