@@ -475,6 +475,7 @@ mod tests {
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
+                "status": "ok",
                 "execution_state": "busy"
             }"#.to_string()
             .into_bytes(),
@@ -528,6 +529,7 @@ mod tests {
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
+                "status": "ok",
                 "code": "a = 10",
                 "execution_count": 4
             }"#.to_string()
@@ -583,6 +585,7 @@ mod tests {
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
+                "status": "ok",
                 "name": "stdout",
                 "text": "10"
             }"#.to_string()
@@ -837,6 +840,7 @@ mod tests {
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
+                "status": "ok",
                 "restart": false
             }"#.to_string()
             .into_bytes(),
@@ -930,6 +934,7 @@ mod tests {
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
+                "status": "ok",
                 "comms": {
                     "u-u-i-d": {
                         "target_name": "foobar"
