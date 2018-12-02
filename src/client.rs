@@ -3,7 +3,7 @@ use connection_config::ConnectionConfig;
 use errors::Result;
 use failure::format_err;
 use hmac::Mac;
-use log::{debug, trace};
+use log::debug;
 use responses::Response;
 use signatures::HmacSha256;
 use std::io::Read;
@@ -32,25 +32,14 @@ impl Client {
 
         let ctx = zmq::Context::new();
 
-        // Set up the sockets
-        trace!("shell port: {}", config.shell_port);
-        let shell_socket = ctx.socket(zmq::REQ)?;
-        shell_socket.connect(&format!("tcp://localhost:{port}", port = config.shell_port))?;
-
-        // Set up iopub socket
-        trace!("iopub port: {}", config.iopub_port);
-        let iopub_socket = ctx.socket(zmq::SUB)?;
-        iopub_socket.connect(&format!("tcp://localhost:{port}", port = config.iopub_port))?;
-        iopub_socket.set_subscribe("".as_bytes())?;
-
-        trace!("heartbeat port: {}", config.hb_port);
-        let heartbeat_socket = ctx.socket(zmq::REQ)?;
-        heartbeat_socket.connect(&format!("tcp://localhost:{port}", port = config.hb_port))?;
+        let shell_socket = Socket::new_shell(&ctx, &config)?;
+        let iopub_socket = Socket::new_iopub(&ctx, &config)?;
+        let heartbeat_socket = Socket::new_heartbeat(&ctx, &config)?;
 
         Ok(Client {
-            shell_socket: Socket(shell_socket),
-            iopub_socket: Arc::new(Mutex::new(Socket(iopub_socket))),
-            heartbeat_socket: Arc::new(Mutex::new(Socket(heartbeat_socket))),
+            shell_socket,
+            iopub_socket: Arc::new(Mutex::new(iopub_socket)),
+            heartbeat_socket: Arc::new(Mutex::new(heartbeat_socket)),
             auth: auth,
         })
     }
