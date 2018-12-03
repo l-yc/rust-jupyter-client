@@ -7,7 +7,8 @@ These are the steps to add a new Command/Response pair:
 - Add a new enum variant for `Response`
 - Add a new deserializable struct for response content
 - Add an entry to match the `msg_type` in `WireMessage::into_response`
-- Add `into_packets` and `message_parsing` tests in `wire.rs`
+- Add `into_packets` tests in `wire.rs`
+- Add `message_parsing` tests in `responses.rs`
 
 # Messages requiring implementation
 
