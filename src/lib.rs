@@ -1,3 +1,6 @@
+/*! Jupyter Client
+*/
+
 extern crate chrono;
 extern crate dirs;
 extern crate failure;
@@ -36,3 +39,4 @@ mod socket;
 mod wire;
 
 pub use client::Client;
+pub use errors::Result;

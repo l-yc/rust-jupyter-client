@@ -51,6 +51,34 @@ where
     None
 }
 
+/** The main `Client` struct.
+
+This handles communication between the user's code, and the kernel itself. It abstracts the
+conversion of messages to and from the [on-the-wire format][wire-format].
+
+## Construction methods
+
+- [`existing`][existing]: looks for the latest connection file and tries to connect
+- [`from_reader`][from_reader]: reads connection details from a reader
+
+## Communication with kernels
+
+- [`send_shell_command`][send-shell-command]: send a shell command (like running a cell's contents)
+- [`send_control_command`][send-control-command]: send an important shell command
+- [`iopub_subscribe`][iopub-subscribe]: subscribe to published information from the kernel
+- [`heartbeat_every`][heartbeat-every]: control the heartbeat and find out if the kernel dies
+- [`heartbeat`][heartbeat]: send a heartbeat every second
+
+
+[wire-format]: https://jupyter-client.readthedocs.io/en/stable/messaging.html#the-wire-protocol
+[existing]: #method.existing
+[from_reader]: #method.from_reader
+[send-shell-command]: #method.send_shell_command
+[send-control-command]: #method.send_control_command
+[iopub-subscribe]: #method.iopub_subscribe
+[heartbeat-every]: #method.heartbeat_every
+[heartbeat]: #method.heartbeat
+*/
 pub struct Client {
     shell_socket: Socket,
     control_socket: Socket,
@@ -60,6 +88,16 @@ pub struct Client {
 }
 
 impl Client {
+    /** Connect to the latest existing kernel file.
+
+    ```rust
+    # use jupyter_client::{Result, Client};
+    # fn main() -> Result<()> {
+    let client = Client::existing()?;
+    # Ok(())
+    # }
+    ```
+     */
     pub fn existing() -> Result<Self> {
         use std::fs::File;
 
