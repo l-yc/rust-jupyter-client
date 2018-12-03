@@ -100,6 +100,12 @@ pub enum IoPubResponse {
         metadata: Metadata,
         content: ExecuteResultContent,
     },
+    ClearOutput {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: ClearOutputContent,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -189,6 +195,11 @@ pub struct ExecuteResultContent {
     pub data: HashMap<String, String>,
     pub metadata: Value,
     pub execution_count: i64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ClearOutputContent {
+    pub wait: bool,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
@@ -796,6 +807,59 @@ mod tests {
                 assert_eq!(content.execution_count, 46);
             }
             _ => unreachable!("Incorrect response type, should be ExecuteResult"),
+        }
+    }
+
+    #[test]
+    fn test_clear_output_message_parsing() {
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "clear_output",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "execute_request",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "wait": false
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::IoPub(IoPubResponse::ClearOutput {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            }) => {
+                // Check the header
+                assert_eq!(header.msg_type, "clear_output");
+
+                // Check the content
+                assert_eq!(content.wait, false);
+            }
+            _ => unreachable!("Incorrect response type, should be ClearOutput"),
         }
     }
 }
