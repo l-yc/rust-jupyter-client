@@ -171,6 +171,12 @@ impl<M: Mac + Debug> WireMessage<M> {
                 metadata,
                 content: serde_json::from_str(content_str)?,
             })),
+            "clear_output" => Ok(Response::IoPub(IoPubResponse::ClearOutput {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
             _ => unreachable!("{}", header.msg_type),
         }
     }
