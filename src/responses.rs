@@ -94,6 +94,12 @@ pub enum IoPubResponse {
         metadata: Metadata,
         content: ErrorContent,
     },
+    ExecuteResult {
+        header: Header,
+        parent_header: Header,
+        metadata: Metadata,
+        content: ExecuteResultContent,
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -177,6 +183,13 @@ pub struct ShutdownContent {
 pub struct CommInfoContent {
     pub status: Status,
     pub comms: HashMap<String, HashMap<String, String>>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ExecuteResultContent {
+    pub data: HashMap<String, String>,
+    pub metadata: Value,
+    pub execution_count: i64,
 }
 
 #[derive(Deserialize, Debug, PartialEq)]
