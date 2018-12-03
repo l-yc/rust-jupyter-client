@@ -1,6 +1,5 @@
 extern crate env_logger;
 extern crate jupyter_client;
-extern crate structopt;
 
 use jupyter_client::commands::Command;
 use jupyter_client::Client;
