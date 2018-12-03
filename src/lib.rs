@@ -19,6 +19,10 @@ extern crate digest;
 #[cfg(test)]
 extern crate generic_array;
 
+#[cfg(test)]
+#[macro_use]
+mod test_helpers;
+
 mod client;
 pub mod commands;
 mod connection_config;
