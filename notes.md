@@ -40,9 +40,9 @@ These are the steps to add a new Command/Response pair:
 - [x] `status`
 - [x] `execute_input`
 - [x] `error`
+- [x] `execute_result`
 - [ ] `display_data`
 - [ ] `update_display_data`
-- [ ] `execute_result`
 - [ ] `clear_output`
 
 ## Kernel -> Client (STDIN)

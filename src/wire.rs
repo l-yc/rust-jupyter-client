@@ -165,6 +165,12 @@ impl<M: Mac + Debug> WireMessage<M> {
                 metadata,
                 content: serde_json::from_str(content_str)?,
             })),
+            "execute_result" => Ok(Response::IoPub(IoPubResponse::ExecuteResult {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
             _ => unreachable!("{}", header.msg_type),
         }
     }
@@ -976,6 +982,67 @@ mod tests {
                 assert_eq!(content.comms["u-u-i-d"]["target_name"], "foobar");
             }
             _ => unreachable!("Incorrect response type, should be CommInfo"),
+        }
+    }
+
+    #[test]
+    fn test_execute_result_message_parsing() {
+        use serde_json::json;
+
+        let auth = FakeAuth::create();
+        let raw_response = vec![
+            "<IDS|MSG>".to_string().into_bytes(),
+            expected_signature().into_bytes(),
+            // Header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "execute_result",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Parent header
+            r#"{
+                "date": "",
+                "msg_id": "",
+                "username": "",
+                "session": "",
+                "msg_type": "execute_request",
+                "version": ""
+            }"#.to_string()
+            .into_bytes(),
+            // Metadata
+            r#"{}"#.to_string().into_bytes(),
+            // Content
+            r#"{
+                "data": {
+                    "text/plain": "10"
+                },
+                "metadata": {},
+                "execution_count": 46
+            }"#.to_string()
+            .into_bytes(),
+        ];
+        let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
+        let response = msg.into_response().unwrap();
+        match response {
+            Response::IoPub(IoPubResponse::ExecuteResult {
+                header,
+                parent_header: _parent_header,
+                metadata: _metadata,
+                content,
+            }) => {
+                // Check the header
+                assert_eq!(header.msg_type, "execute_result");
+
+                // Check the content
+                assert_eq!(content.data["text/plain"], "10");
+                assert_eq!(content.metadata, json!({}));
+                assert_eq!(content.execution_count, 46);
+            }
+            _ => unreachable!("Incorrect response type, should be ExecuteResult"),
         }
     }
 }
