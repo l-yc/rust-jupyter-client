@@ -121,13 +121,11 @@ pub struct ExecuteReplyContent {
 
 #[derive(Deserialize, Debug)]
 pub struct StatusContent {
-    pub status: Status,
     pub execution_state: ExecutionState,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct ExecuteInputContent {
-    pub status: Status,
     pub code: String,
     pub execution_count: i64,
 }
@@ -142,7 +140,6 @@ pub struct InspectContent {
 
 #[derive(Deserialize, Debug)]
 pub struct StreamContent {
-    pub status: Status,
     pub name: StreamType,
     pub text: String,
 }

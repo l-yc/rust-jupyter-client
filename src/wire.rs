@@ -2,16 +2,19 @@ use errors::Result;
 use failure::{bail, format_err};
 use header::Header;
 use hmac::Mac;
+use log::{debug, trace};
 use metadata::Metadata;
 use responses::*;
 use serde_json::Value;
 use signatures::sign;
+use std::fmt::Debug;
 
 type Part = Vec<u8>;
 
 static DELIMITER: &[u8] = b"<IDS|MSG>";
 
-pub(crate) struct WireMessage<M: Mac> {
+#[derive(Debug)]
+pub(crate) struct WireMessage<M: Mac + Debug> {
     pub(crate) header: Part,
     pub(crate) parent_header: Part,
     pub(crate) metadata: Part,
@@ -19,12 +22,21 @@ pub(crate) struct WireMessage<M: Mac> {
     pub(crate) auth: M,
 }
 
-impl<M: Mac> WireMessage<M> {
+impl<M: Mac + Debug> WireMessage<M> {
     pub(crate) fn from_raw_response(raw: Vec<Vec<u8>>, auth: M) -> Result<Self> {
+        trace!("raw response: {:?}", raw);
         let delim_idx = raw
             .iter()
             .position(|r| String::from_utf8(r.to_vec()).unwrap() == "<IDS|MSG>")
             .ok_or_else(|| format_err!("cannot find delimiter in response"))?;
+
+        debug!(
+            "identities: {:#?}",
+            raw[..delim_idx]
+                .iter()
+                .map(|b| std::str::from_utf8(b))
+                .collect::<Vec<_>>()
+        );
 
         // Check the signature
         let signature = String::from_utf8_lossy(&raw[delim_idx + 1]);
@@ -47,15 +59,20 @@ impl<M: Mac> WireMessage<M> {
     pub(crate) fn into_response(self) -> Result<Response> {
         let header_str = std::str::from_utf8(&self.header)?;
         let header: Header = serde_json::from_str(header_str)?;
+        trace!("header: {:?}", header);
 
         let parent_header_str = std::str::from_utf8(&self.parent_header)?;
         let parent_header: Header = serde_json::from_str(parent_header_str)?;
+        trace!("parent header: {:?}", parent_header);
 
         let metadata_str = std::str::from_utf8(&self.metadata)?;
         let metadata: Metadata = serde_json::from_str(metadata_str)?;
+        trace!("metadata: {:?}", metadata);
 
         let content_str = std::str::from_utf8(&self.content)?;
+        trace!("content string: {}", content_str);
 
+        debug!("received message type `{}`", &header.msg_type);
         match header.msg_type.as_str() {
             "kernel_info_reply" => Ok(Response::Shell(ShellResponse::KernelInfo {
                 header,

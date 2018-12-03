@@ -5,14 +5,10 @@ extern crate structopt;
 use jupyter_client::commands::Command;
 use jupyter_client::Client;
 use std::collections::HashMap;
-use std::fs::File;
-use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
-    #[structopt(parse(from_os_str))]
-    filename: PathBuf,
     #[structopt(name = "command", short = "c")]
     command: String,
 }
@@ -22,10 +18,7 @@ fn main() {
 
     let args = Opt::from_args();
 
-    let filename = args.filename;
-    let file = File::open(filename).expect("opening jupyter config file");
-
-    let client = Client::from_reader(&file).expect("creating jupyter connection");
+    let client = Client::existing().expect("creating jupyter connection");
 
     let command = Command::Execute {
         code: args.command,

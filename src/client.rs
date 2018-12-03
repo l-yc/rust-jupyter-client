@@ -2,17 +2,54 @@ use commands::Command;
 use connection_config::ConnectionConfig;
 use errors::Result;
 use failure::format_err;
+use glob::glob;
 use hmac::Mac;
-use log::debug;
+use log::{debug, trace};
+use paths::jupyter_runtime_dir;
 use responses::Response;
 use signatures::HmacSha256;
+use std::env::current_dir;
+use std::fs;
 use std::io::Read;
+use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
 use socket::Socket;
+
+fn find_connection_file<S>(glob_pattern: S, paths: Option<Vec<PathBuf>>) -> Option<PathBuf>
+where
+    S: Into<String>,
+{
+    let paths = paths.unwrap_or_else(|| {
+        vec![
+            current_dir().unwrap_or_else(|_| PathBuf::from(".")),
+            jupyter_runtime_dir(),
+        ]
+    });
+    trace!("connection file paths to search: {:?}", paths);
+
+    let glob_pattern = glob_pattern.into();
+
+    for path in paths.into_iter() {
+        let pattern = path.join(&glob_pattern);
+        trace!("glob pattern: {:?}", pattern);
+        let matches = glob(pattern.to_str().unwrap()).unwrap();
+        let mut matches: Vec<PathBuf> = matches.map(|m| m.unwrap()).collect();
+        trace!("matches: {:?}", matches);
+        if !matches.is_empty() {
+            matches.sort_by_key(|p| {
+                let metadata = fs::metadata(p).unwrap();
+                metadata.modified().unwrap()
+            });
+            trace!("sorted matches: {:#?}", matches);
+            return Some(matches.last().unwrap().clone());
+        }
+    }
+    None
+}
 
 pub struct Client {
     shell_socket: Socket,
@@ -22,6 +59,18 @@ pub struct Client {
 }
 
 impl Client {
+    pub fn existing() -> Result<Self> {
+        use std::fs::File;
+
+        find_connection_file("kernel-*.json", None)
+            .ok_or_else(|| format_err!("no connection file found"))
+            .and_then(|filename| {
+                debug!("found connection file {:?}", filename);
+                let f = File::open(filename)?;
+                Self::from_reader(f)
+            })
+    }
+
     pub fn from_reader<R>(reader: R) -> Result<Self>
     where
         R: Read,
