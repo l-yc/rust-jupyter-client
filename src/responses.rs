@@ -152,7 +152,6 @@ pub struct StreamContent {
 
 #[derive(Deserialize, Debug)]
 pub struct ErrorContent {
-    pub status: Status,
     pub ename: String,
     pub evalue: String,
     pub traceback: Vec<String>,
