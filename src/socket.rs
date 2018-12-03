@@ -7,6 +7,7 @@ use zmq;
 
 pub(crate) enum SocketType {
     Shell,
+    Control,
     IoPub,
     Heartbeat,
 }
@@ -17,6 +18,14 @@ impl Socket {
     pub fn new_shell(ctx: &zmq::Context, config: &ConnectionConfig) -> Result<Socket> {
         let socket = ctx.socket(zmq::REQ)?;
         let conn_str = Socket::connection_string(config, SocketType::Shell);
+        socket.connect(&conn_str)?;
+
+        Ok(Socket(socket))
+    }
+
+    pub fn new_control(ctx: &zmq::Context, config: &ConnectionConfig) -> Result<Socket> {
+        let socket = ctx.socket(zmq::REQ)?;
+        let conn_str = Socket::connection_string(config, SocketType::Control);
         socket.connect(&conn_str)?;
 
         Ok(Socket(socket))
@@ -60,6 +69,7 @@ impl Socket {
     fn connection_string(config: &ConnectionConfig, socket_type: SocketType) -> String {
         let port = match socket_type {
             SocketType::Shell => config.shell_port,
+            SocketType::Control => config.control_port,
             SocketType::IoPub => config.iopub_port,
             SocketType::Heartbeat => config.hb_port,
         };

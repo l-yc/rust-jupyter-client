@@ -53,6 +53,7 @@ where
 
 pub struct Client {
     shell_socket: Socket,
+    control_socket: Socket,
     iopub_socket: Arc<Mutex<Socket>>,
     heartbeat_socket: Arc<Mutex<Socket>>,
     auth: HmacSha256,
@@ -82,11 +83,13 @@ impl Client {
         let ctx = zmq::Context::new();
 
         let shell_socket = Socket::new_shell(&ctx, &config)?;
+        let control_socket = Socket::new_control(&ctx, &config)?;
         let iopub_socket = Socket::new_iopub(&ctx, &config)?;
         let heartbeat_socket = Socket::new_heartbeat(&ctx, &config)?;
 
         Ok(Client {
             shell_socket,
+            control_socket,
             iopub_socket: Arc::new(Mutex::new(iopub_socket)),
             heartbeat_socket: Arc::new(Mutex::new(heartbeat_socket)),
             auth: auth,
@@ -95,10 +98,18 @@ impl Client {
 
     pub fn send_shell_command(&self, command: Command) -> Result<Response> {
         debug!("Sending shell command: {:?}", command);
-        let wire = command.into_wire(self.auth.clone())?;
-        self.shell_socket.send_wire(wire)?;
+        self.send_command_to_socket(command, &self.shell_socket)
+    }
 
-        let resp_wire = self.shell_socket.recv_wire(self.auth.clone())?;
+    pub fn send_control_command(&self, command: Command) -> Result<Response> {
+        debug!("Sending control command: {:?}", command);
+        self.send_command_to_socket(command, &self.control_socket)
+    }
+
+    fn send_command_to_socket(&self, command: Command, socket: &Socket) -> Result<Response> {
+        let wire = command.into_wire(self.auth.clone())?;
+        socket.send_wire(wire)?;
+        let resp_wire = socket.recv_wire(self.auth.clone())?;
         resp_wire.into_response()
     }
 
