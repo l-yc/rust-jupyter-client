@@ -88,9 +88,12 @@ pub struct Client {
 }
 
 impl Client {
-    /** Connect to the latest existing kernel file.
+    /** Connect to the latest existing connection info file.
 
-    ```rust
+    This searches the standard runtime path for the latest kernel config file by last-modified
+    time. This is then loaded by using [`from_reader`](#method.from_reader).
+
+    ```
     # use jupyter_client::{Result, Client};
     # fn main() -> Result<()> {
     let client = Client::existing()?;
@@ -110,6 +113,23 @@ impl Client {
             })
     }
 
+    /** Connect to a kernel with a definition from a specific connection info file.
+
+    This takes an [`std::io::Read`](https://doc.rust-lang.org/std/io/trait.Read.html) implementor
+    (e.g. a [`std::fs::File`](https://doc.rust-lang.org/std/fs/struct.File.html)).
+
+    ```no_run
+    # use jupyter_client::{Result, Client};
+    # use std::fs::File;
+    # use std::io::Read;
+    # fn main() -> Result<()> {
+    # let file = File::open("")?;
+    // let file = File::open(...)?;
+    let client = Client::from_reader(file)?;
+    # Ok(())
+    # }
+    ```
+    */
     pub fn from_reader<R>(reader: R) -> Result<Self>
     where
         R: Read,
@@ -134,11 +154,15 @@ impl Client {
         })
     }
 
+    /** Send a shell command to the kernel.
+     */
     pub fn send_shell_command(&self, command: Command) -> Result<Response> {
         debug!("Sending shell command: {:?}", command);
         self.send_command_to_socket(command, &self.shell_socket)
     }
 
+    /** Send a control command to the kernel.
+     */
     pub fn send_control_command(&self, command: Command) -> Result<Response> {
         debug!("Sending control command: {:?}", command);
         self.send_command_to_socket(command, &self.control_socket)
@@ -151,6 +175,8 @@ impl Client {
         resp_wire.into_response()
     }
 
+    /** Subscribe to IOPub messages.
+     */
     pub fn iopub_subscribe(&self) -> Result<Receiver<Response>> {
         let (tx, rx) = mpsc::channel();
         let socket = self.iopub_socket.clone();
@@ -166,6 +192,8 @@ impl Client {
         Ok(rx)
     }
 
+    /** Subscribe to heartbeat messages on a given duration.
+     */
     pub fn heartbeat_every(&self, seconds: Duration) -> Result<Receiver<()>> {
         let (tx, rx) = mpsc::channel();
         let socket = self.heartbeat_socket.clone();
@@ -179,6 +207,8 @@ impl Client {
         Ok(rx)
     }
 
+    /** Subscribe to heartbeat messages every second.
+     */
     pub fn heartbeat(&self) -> Result<Receiver<()>> {
         self.heartbeat_every(Duration::from_secs(1))
     }

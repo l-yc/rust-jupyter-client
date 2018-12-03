@@ -1,3 +1,5 @@
+/*! Available responses back from the kernel.
+*/
 use header::Header;
 use metadata::Metadata;
 use serde_derive::Deserialize;
