@@ -93,7 +93,7 @@ impl Client {
     This searches the standard runtime path for the latest kernel config file by last-modified
     time. This is then loaded by using [`from_reader`](#method.from_reader).
 
-    ```
+    ```no_run
     # use jupyter_client::{Result, Client};
     # fn main() -> Result<()> {
     let client = Client::existing()?;
