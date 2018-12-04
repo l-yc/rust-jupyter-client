@@ -3,6 +3,10 @@
 # https://hub.docker.com/r/library/rust/tags/
 image: "rust:latest"
 
+cache:
+  paths:
+    - target
+
 # Optional: Pick zero or more services to be used on all builds.
 # Only needed when using a docker container to run your tests in.
 # Check out: http://docs.gitlab.com/ce/ci/docker/using_docker_images.html#what-is-a-service
@@ -43,5 +47,13 @@ test:nightly:
   - RUST_VERSION=nightly bash ./bin/test
 
 docs:
+  before_script:
+  - apt-get update -yqq
+  - apt-get install -yqq --no-install-recommends libzmq3-dev
+
   script:
     - bash ./bin/docs
+
+  artifacts:
+    paths:
+      - target/doc
