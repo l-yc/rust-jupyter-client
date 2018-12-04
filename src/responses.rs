@@ -277,6 +277,18 @@ mod tests {
                 "implementation_version": "implementation_version",
                 "protocol_version": "protocol_version",
                 "status": "ok",
+                "language_info": {
+                    "name": "python",
+                    "version": "3.7.0",
+                    "mimetype": "text/x-python",
+                    "file_extension": ".py",
+                    "pygments_lexer": "ipython3",
+                    "codemirror_mode": {
+                        "name": "ipython",
+                        "version": 3
+                    },
+                    "nbconvert_exporter": "python"
+                },
                 "help_links": [{"text": "text", "url": "url"}]
             }"#.to_string()
             .into_bytes(),
@@ -306,6 +318,7 @@ mod tests {
                         url: "url".to_string(),
                     }]
                 );
+                assert_eq!(content.language_info.name, "python");
             }
             _ => unreachable!("Incorrect response type, should be KernelInfo"),
         }
