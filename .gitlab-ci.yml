@@ -41,3 +41,7 @@ test:nightly:
   script:
   - rustc --version && cargo --version      # Print version info for debugging
   - RUST_VERSION=nightly bash ./bin/test
+
+docs:
+  script:
+    - RUST_VERSION=stable bash ./bin/docs
