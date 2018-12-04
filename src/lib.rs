@@ -1,6 +1,5 @@
+#![deny(missing_docs)]
 // TODO
-// #![deny(missing_docs)]
-
 /*! Jupyter Client
 */
 
