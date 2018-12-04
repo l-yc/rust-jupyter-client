@@ -3,6 +3,10 @@
 # https://hub.docker.com/r/library/rust/tags/
 image: "rust:latest"
 
+stages:
+  - pre
+  - test
+
 cache:
   paths:
     - target
@@ -19,6 +23,7 @@ cache:
 # You will often need this when you (or any of your dependencies) depends on C code.
 
 formatting:
+  stage: pre
   before_script:
   - rustup component add rustfmt-preview
   script:
@@ -28,6 +33,7 @@ formatting:
 
 # Use cargo to test the project
 test:stable:
+  stage: test
   before_script:
   - apt-get update -yqq
   - apt-get install -yqq --no-install-recommends libzmq3-dev
@@ -37,6 +43,7 @@ test:stable:
   - bash ./bin/test
 
 test:nightly:
+  stage: test
   before_script:
   - apt-get update -yqq
   - apt-get install -yqq --no-install-recommends libzmq3-dev
@@ -47,6 +54,7 @@ test:nightly:
   - RUST_VERSION=nightly bash ./bin/test
 
 docs:
+  stage: pre
   before_script:
   - apt-get update -yqq
   - apt-get install -yqq --no-install-recommends libzmq3-dev
