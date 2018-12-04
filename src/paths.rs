@@ -45,5 +45,9 @@ fn os_jupyter_data_dir() -> PathBuf {
 
 #[cfg(target_os = "windows")]
 fn os_jupyter_data_dir() -> PathBuf {
-    unimplemented!()
+    if let Ok(app_data) = env::var("APPDATA") {
+        PathBuf::from(app_data).join("jupyter")
+    } else {
+        unimplemented!()
+    }
 }
