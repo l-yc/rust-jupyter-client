@@ -44,4 +44,4 @@ test:nightly:
 
 docs:
   script:
-    - RUST_VERSION=stable bash ./bin/docs
+    - bash ./bin/docs
