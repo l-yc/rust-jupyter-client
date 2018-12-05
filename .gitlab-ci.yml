@@ -64,8 +64,8 @@ pages:
     - mv target/doc public
     - echo '<meta http-equiv="refresh" content=0;url=jupyter_client/index.html>' > public/index.html
 
-  # only:
-  #   - dev
+  only:
+    - dev
 
   artifacts:
     paths:
