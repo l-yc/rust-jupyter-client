@@ -2,6 +2,12 @@
 name = "jupyter-client"
 version = "0.1.0"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
+description = "Jupyter client written in Rust"
+homepage = "https://gitlab.com/srwalker101/rust-jupyter-client"
+repository = "https://gitlab.com/srwalker101/rust-jupyter-client"
+readme = "README.md"
+license = "Apache-2.0"
+documentation = "https://docs.rs/jupyter-client"
 
 [dependencies]
 zmq = "0.8.2"
