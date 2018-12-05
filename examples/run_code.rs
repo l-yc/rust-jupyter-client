@@ -2,16 +2,14 @@ extern crate env_logger;
 extern crate jupyter_client;
 extern crate structopt;
 
-use jupyter_client::{Client, Command};
+use jupyter_client::commands::Command;
+use jupyter_client::responses::{Response, ShellResponse, Status};
+use jupyter_client::Client;
 use std::collections::HashMap;
-use std::fs::File;
-use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
-    #[structopt(parse(from_os_str))]
-    filename: PathBuf,
     #[structopt(name = "command", short = "c")]
     command: String,
 }
@@ -21,12 +19,9 @@ fn main() {
 
     let args = Opt::from_args();
 
-    let filename = args.filename;
-    let file = File::open(filename).expect("opening jupyter config file");
+    let client = Client::existing().expect("creating jupyter connection");
 
-    let client = Client::from_reader(&file).expect("creating jupyter connection");
-
-    let command = Command::ExecuteRequest {
+    let command = Command::Execute {
         code: args.command,
         silent: false,
         store_history: true,
@@ -35,5 +30,17 @@ fn main() {
         stop_on_error: false,
     };
     let response = client.send_shell_command(command).expect("sending command");
-    println!("Response: {:#?}", response);
+    if let &Response::Shell(ShellResponse::Execute { ref content, .. }) = &response {
+        match content.status {
+            Status::Ok | Status::Abort => println!("Response: {:#?}", response),
+            Status::Error => {
+                eprintln!("Error: {}", content.evalue.as_ref().unwrap());
+                for line in content.traceback.as_ref().unwrap() {
+                    eprintln!("{}", line);
+                }
+            }
+        }
+    } else {
+        panic!("unexpected response type");
+    }
 }

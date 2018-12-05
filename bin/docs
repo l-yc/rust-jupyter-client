@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -ex
+
+RUST_VERSION=${RUST_VERSION:-stable}
+
+main() {
+    cargo +${RUST_VERSION} doc
+}
+
+main

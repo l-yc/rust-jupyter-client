@@ -8,8 +8,8 @@ fn main() {
 
     let client = Client::existing().expect("creating jupyter connection");
 
-    let receiver = client.iopub_subscribe().unwrap();
-    for msg in receiver {
-        println!("{:#?}", msg);
+    let receiver = client.heartbeat().unwrap();
+    for msg in receiver.iter().take(5) {
+        println!("{:?}", msg);
     }
 }

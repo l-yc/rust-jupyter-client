@@ -3,6 +3,14 @@
 # https://hub.docker.com/r/library/rust/tags/
 image: "rust:latest"
 
+stages:
+  - pre
+  - test
+
+cache:
+  paths:
+    - target
+
 # Optional: Pick zero or more services to be used on all builds.
 # Only needed when using a docker container to run your tests in.
 # Check out: http://docs.gitlab.com/ce/ci/docker/using_docker_images.html#what-is-a-service
@@ -15,6 +23,7 @@ image: "rust:latest"
 # You will often need this when you (or any of your dependencies) depends on C code.
 
 formatting:
+  stage: pre
   before_script:
   - rustup component add rustfmt-preview
   script:
@@ -24,6 +33,7 @@ formatting:
 
 # Use cargo to test the project
 test:stable:
+  stage: test
   before_script:
   - apt-get update -yqq
   - apt-get install -yqq --no-install-recommends libzmq3-dev
@@ -33,6 +43,7 @@ test:stable:
   - bash ./bin/test
 
 test:nightly:
+  stage: test
   before_script:
   - apt-get update -yqq
   - apt-get install -yqq --no-install-recommends libzmq3-dev
@@ -41,3 +52,22 @@ test:nightly:
   script:
   - rustc --version && cargo --version      # Print version info for debugging
   - RUST_VERSION=nightly bash ./bin/test
+
+pages:
+  stage: pre
+  before_script:
+  - apt-get update -yqq
+  - apt-get install -yqq --no-install-recommends libzmq3-dev
+
+  script:
+    - cargo doc --no-deps
+    - mv target/doc public
+    - echo '<meta http-equiv="refresh" content=0;url=jupyter_client/index.html>' > public/index.html
+
+  # only:
+  #   - dev
+
+  artifacts:
+    paths:
+      - public
+

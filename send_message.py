@@ -61,6 +61,18 @@ class Frontend(object):
         identities, m = self.deserialize_wire_msg(msg)
         return m
 
+    def get_comm_info(self):
+        self.send("comm_info_request")
+        msg = self.socket.recv_multipart()
+        identities, m = self.deserialize_wire_msg(msg)
+        return m
+
+    def shutdown(self, restart=False):
+        self.send("shutdown_request", content={"restart": restart})
+        msg = self.socket.recv_multipart()
+        identities, m = self.deserialize_wire_msg(msg)
+        return m
+
     def sign(self, msg_lst):
         h = self.auth.copy()
         for m in msg_lst:
@@ -125,5 +137,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     f = Frontend(args.filename)
-    kernel_info = f.get_kernel_info()
-    pprint.pprint(kernel_info)
+    pprint.pprint(f.get_kernel_info())
