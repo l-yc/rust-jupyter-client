@@ -1,5 +1,5 @@
 [package]
-name = "jupyter_client"
+name = "jupyter-client"
 version = "0.1.0"
 authors = ["Simon Walker <s.r.walker101@googlemail.com>"]
 
