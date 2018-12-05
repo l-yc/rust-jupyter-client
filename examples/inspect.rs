@@ -52,9 +52,11 @@ fn main() {
 
     // Get some more detail and print the help
     if let Response::Shell(ShellResponse::Inspect { content, .. }) = response {
-        println!(
-            "\nHelp:\n\n{}",
-            content.data["text/plain"].as_str().unwrap()
-        );
+        if content.found {
+            println!(
+                "\nHelp:\n\n{}",
+                content.data["text/plain"].as_str().unwrap()
+            );
+        }
     }
 }

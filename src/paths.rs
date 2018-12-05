@@ -40,7 +40,12 @@ fn os_jupyter_data_dir() -> PathBuf {
 
 #[cfg(target_os = "linux")]
 fn os_jupyter_data_dir() -> PathBuf {
-    unimplemented!()
+    if let Ok(p) = env::var("XDG_DATA_HOME") {
+        PathBuf::from(p).join("jupyter")
+    } else {
+        let home = home_dir().unwrap();
+        home.join(".local").join("share")
+    }
 }
 
 #[cfg(target_os = "windows")]

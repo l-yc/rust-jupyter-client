@@ -1,3 +1,12 @@
+/*! Available commands to send to the kernel.
+
+These should be constructed, and then sent to the kernel via
+[`Client::send_shell_command`][send-shell-command] or
+[`Client::send_control_command`][send-control-command].
+
+[send-shell-command]: ../struct.Client.html#method.send_shell_command
+[send-control-command]: ../struct.Client.html#method.send_control_command
+*/
 use errors::Result;
 use header::Header;
 use hmac::Mac;
@@ -9,40 +18,115 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use wire::WireMessage;
 
+/** Available commands.
+ */
 #[derive(Serialize, Debug)]
 #[serde(untagged)]
 pub enum Command {
+    /// Ask for information about the running kernel
     KernelInfo,
+    /// Execute a specific command
     Execute {
+        /// Source code to be executed by the kernel, one or more lines.
         code: String,
+        /** A boolean flag which, if `true`, signals the kernel to execute
+        this code as quietly as possible.  `silent=true` forces `store_history` to be `false`, and
+        will *not*:
+        - broadcast output on the IOPub channel
+        - have an execute_result
+        The default is `false`.
+        */
         silent: bool,
+        /** A boolean flag which, if `true`, signals the kernel to populate history
+        The default is `true` if silent is `false`.  If silent is `true`, `store_history` is forced
+        to be `false`.
+        */
         store_history: bool,
+        /** A `HashMap` mapping names to expressions to be evaluated in the
+        user's `HashMap`. The rich display-data representation of each will be evaluated after
+        execution.  See the `display_data` content for the structure of the representation data.
+        */
         user_expressions: HashMap<String, String>,
+        /** Some frontends do not support stdin requests.
+        If this is true, code running in the kernel can prompt the user for input with an
+        `input_request` message. If it is `false`, the kernel should not send these messages.
+        */
         allow_stdin: bool,
+        /** A boolean flag, which, if `true`, does not abort the execution queue, if an exception
+         * is encountered.
+        This allows the queued execution of multiple `execute_requests`, even if they generate
+        exceptions.
+        */
         stop_on_error: bool,
     },
+    /// Perform introspection into a piece of code.
     Inspect {
+        /** The code context in which introspection is requested
+        this may be up to an entire multiline cell.
+        */
         code: String,
+
+        /** The cursor position within 'code' (in unicode characters) where inspection is requested
+         */
         cursor_pos: u64,
+
+        /** The level of detail desired.  In IPython, the default (0) is equivalent to typing
+        'x?' at the prompt, 1 is equivalent to 'x??'.
+        The difference is up to kernels, but in IPython level 1 includes the source code
+        if available.
+        */
         detail_level: DetailLevel,
     },
+    /// Ask the kernel to complete the code at the cursor.
     Complete {
+        /** The code context in which completion is requested
+        this may be up to an entire multiline cell, such as
+        'foo = a.isal'
+        */
         code: String,
+
+        /** The cursor position within 'code' (in unicode characters) where completion is requested
+         */
         cursor_pos: u64,
     },
+    /// Fetch history from the kernel.
     History {
+        /// If True, also return output history in the resulting dict.
         output: bool,
+
+        /// If True, return the raw input history, else the transformed input.
         raw: bool,
+
+        /** So far, this can be `range`, `tail` or `search`.
+        If `hist_access_type` is `range`, get a range of input cells. session
+        is a number counting up each time the kernel starts; you can give
+        a positive session number, or a negative number to count back from
+        the current session.
+        `start` and `stop` are line (cell) numbers within that session.
+        If `hist_access_type` is 'tail' or 'search', get the last n cells.
+        If `hist_access_type` is 'search', get cells matching the specified glob
+        pattern (with * and ? as wildcards).
+        */
         hist_access_type: HistoryAccessType,
+
+        /** If `hist_access_type` is 'search' and unique is true, do not
+          include duplicated history.  Default is false.
+          */
         unique: bool,
     },
+    /// Ask the kernel if the current code is complete
     IsComplete {
+        /// The code entered so far as a multiline string
         code: String,
     },
+    /// Tell the kernel to shutdown.
     Shutdown {
+        /// False if final shutdown, or True if shutdown precedes a restart
         restart: bool,
     },
+    /// Fetch comm info.
     CommInfo {
+        /// The target name
         target_name: Option<String>,
     },
 }
@@ -225,16 +309,42 @@ impl Command {
     }
 }
 
+/// Type of history requested.
 #[derive(Serialize, Debug)]
 pub enum HistoryAccessType {
-    Tail { n: u64 },
-    Range { session: i64, start: u64, stop: u64 },
-    Search { pattern: String },
+    /// Get the last `n` cells.
+    Tail {
+        /// Number of cells requested.
+        n: u64,
+    },
+    /// Get the range of cells associated with a session within a range.
+    Range {
+        /// Session to query for.
+        session: i64,
+        /// Start of the range
+        start: u64,
+        /// End of the range.
+        stop: u64,
+    },
+    /// Search for history items matching a pattern.
+    Search {
+        /// Pattern to search for.
+        pattern: String,
+    },
 }
 
+/// Level of detail requested when requesting code introspection
 #[derive(Debug)]
 pub enum DetailLevel {
+    /** Equivalent to IPython's `?` operator.
+
+    Typically fetches the documentation.
+    */
     Zero,
+    /** Equivalent to IPython's `??` operator.
+
+    Typically fetches the source code.
+    */
     One,
 }
 
