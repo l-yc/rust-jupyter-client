@@ -53,15 +53,21 @@ test:nightly:
   - rustc --version && cargo --version      # Print version info for debugging
   - RUST_VERSION=nightly bash ./bin/test
 
-docs:
+pages:
   stage: pre
   before_script:
   - apt-get update -yqq
   - apt-get install -yqq --no-install-recommends libzmq3-dev
 
   script:
-    - bash ./bin/docs
+    - cargo doc --no-deps
+    - mv target/doc public
+    - echo '<meta http-equiv="refresh" content=0;url=jupyter_client/index.html>' > public/index.html
+
+  # only:
+  #   - dev
 
   artifacts:
     paths:
-      - target/doc
+      - public
+
