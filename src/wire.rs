@@ -1,12 +1,12 @@
-use errors::Result;
+use crate::errors::Result;
 use failure::{bail, format_err};
-use header::Header;
+use crate::header::Header;
 use hmac::Mac;
 use log::{debug, trace};
-use metadata::Metadata;
-use responses::*;
+use crate::metadata::Metadata;
+use crate::responses::*;
 use serde_json::Value;
-use signatures::sign;
+use crate::signatures::sign;
 use std::fmt::Debug;
 
 type Part = Vec<u8>;

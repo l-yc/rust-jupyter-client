@@ -90,5 +90,5 @@ mod signatures;
 mod socket;
 mod wire;
 
-pub use client::Client;
-pub use errors::Result;
+pub use crate::client::Client;
+pub use crate::errors::Result;

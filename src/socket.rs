@@ -1,8 +1,8 @@
-use connection_config::ConnectionConfig;
-use errors::Result;
+use crate::connection_config::ConnectionConfig;
+use crate::errors::Result;
 use hmac::Mac;
 use std::fmt::Debug;
-use wire::WireMessage;
+use crate::wire::WireMessage;
 use zmq;
 
 pub(crate) enum SocketType {
