@@ -25,12 +25,13 @@ cache:
 formatting:
   stage: pre
   before_script:
-  - rustup update
+  - rustup update stable
+  - rustup override set stable
   - rustup component add rustfmt
+
   script:
   - rustc --version && cargo --version
   - bash ./bin/check-formatting
-
 
 # Use cargo to test the project
 test:stable:
