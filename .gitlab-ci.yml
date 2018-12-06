@@ -21,9 +21,7 @@ stages:
 formatting:
   stage: pre
   before_script:
-  - rustup update stable
-  - rustup override set stable
-  - rustup component add rustfmt
+  - rustup component add rustfmt-preview
 
   script:
   - rustc --version && cargo --version
@@ -35,7 +33,6 @@ test:stable:
   before_script:
   - apt-get update -yqq
   - apt-get install -yqq --no-install-recommends libzmq3-dev
-  - rustup update stable
 
   script:
   - rustc --version && cargo --version      # Print version info for debugging
