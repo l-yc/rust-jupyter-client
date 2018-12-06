@@ -15,7 +15,8 @@ fn main() {
     let code = r#"class Foo(object):
     """Foo class"""
     pass
-"#.to_string();
+"#
+    .to_string();
     let prep_cmd = Command::Execute {
         code: code,
         silent: false,

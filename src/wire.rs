@@ -1,12 +1,12 @@
 use crate::errors::Result;
-use failure::{bail, format_err};
 use crate::header::Header;
-use hmac::Mac;
-use log::{debug, trace};
 use crate::metadata::Metadata;
 use crate::responses::*;
-use serde_json::Value;
 use crate::signatures::sign;
+use failure::{bail, format_err};
+use hmac::Mac;
+use log::{debug, trace};
+use serde_json::Value;
 use std::fmt::Debug;
 
 type Part = Vec<u8>;
@@ -347,8 +347,8 @@ mod tests {
         assert_eq!(
             content,
             json!({
-            "code": "a = 10",
-        })
+                "code": "a = 10",
+            })
         );
     }
 
@@ -392,8 +392,8 @@ mod tests {
         assert_eq!(
             content,
             json!({
-            "restart": false,
-        })
+                "restart": false,
+            })
         );
     }
 

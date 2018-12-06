@@ -1,13 +1,13 @@
 use crate::commands::Command;
 use crate::connection_config::ConnectionConfig;
 use crate::errors::Result;
+use crate::paths::jupyter_runtime_dir;
+use crate::responses::Response;
+use crate::signatures::HmacSha256;
 use failure::format_err;
 use glob::glob;
 use hmac::Mac;
 use log::{debug, trace};
-use crate::paths::jupyter_runtime_dir;
-use crate::responses::Response;
-use crate::signatures::HmacSha256;
 use std::env::current_dir;
 use std::fs;
 use std::io::Read;

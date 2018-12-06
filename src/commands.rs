@@ -9,6 +9,7 @@ These should be constructed, and then sent to the kernel via
 */
 use crate::errors::Result;
 use crate::header::Header;
+use crate::wire::WireMessage;
 use hmac::Mac;
 use log::trace;
 use serde::{Serialize as SerdeSerialize, Serializer};
@@ -16,7 +17,6 @@ use serde_derive::Serialize;
 use serde_json::json;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use crate::wire::WireMessage;
 
 /** Available commands.
  */
@@ -110,8 +110,8 @@ pub enum Command {
         hist_access_type: HistoryAccessType,
 
         /** If `hist_access_type` is 'search' and unique is true, do not
-          include duplicated history.  Default is false.
-          */
+        include duplicated history.  Default is false.
+        */
         unique: bool,
     },
     /// Ask the kernel if the current code is complete
