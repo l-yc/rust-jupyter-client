@@ -7,10 +7,6 @@ stages:
   - pre
   - test
 
-cache:
-  paths:
-    - target
-
 # Optional: Pick zero or more services to be used on all builds.
 # Only needed when using a docker container to run your tests in.
 # Check out: http://docs.gitlab.com/ce/ci/docker/using_docker_images.html#what-is-a-service
@@ -45,6 +41,11 @@ test:stable:
   - rustc --version && cargo --version      # Print version info for debugging
   - bash ./bin/test
 
+  cache:
+    paths:
+      - target/debug
+
+
 test:nightly:
   stage: test
   before_script:
@@ -56,6 +57,10 @@ test:nightly:
   - rustc --version && cargo --version      # Print version info for debugging
   - RUST_VERSION=nightly bash ./bin/test
 
+  cache:
+    paths:
+      - target/debug
+
 pages:
   stage: pre
   before_script:
@@ -66,6 +71,10 @@ pages:
     - cargo doc --no-deps
     - mv target/doc public
     - echo '<meta http-equiv="refresh" content=0;url=jupyter_client/index.html>' > public/index.html
+
+  cache:
+    paths:
+      - target/doc
 
   only:
     - dev
