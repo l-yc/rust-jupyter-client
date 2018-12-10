@@ -206,51 +206,20 @@ mod tests {
     use super::*;
     use crate::commands::Command;
     use crate::test_helpers::*;
+    use serde_json::json;
 
     #[test]
     fn test_kernel_info_into_packets() {
-        use crate::header::Header;
-        use serde_json::{json, Value};
-
-        let cmd = Command::KernelInfo;
-        let auth = FakeAuth::create();
-        let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
-        let packets = wire.into_packets().expect("creating packets");
-
-        let mut packets = packets.into_iter();
-        let packet = packets.next().unwrap();
-        compare_bytestrings!(&packet, &DELIMITER);
-
-        let packet = packets.next().unwrap();
-        compare_bytestrings!(&packet, &expected_signature().as_bytes());
-
-        let packet = packets.next().unwrap();
-        let header_str = std::str::from_utf8(&packet).unwrap();
-        let header: Header = serde_json::from_str(header_str).unwrap();
-
-        assert_eq!(header.msg_type, "kernel_info_request");
-
-        // The rest of the packet should be empty maps
-        let packet = packets.next().unwrap();
-        let parent_header_str = std::str::from_utf8(&packet).unwrap();
-        let parent_header: Value = serde_json::from_str(parent_header_str).unwrap();
-        assert_eq!(parent_header, json!({}));
-
-        let packet = packets.next().unwrap();
-        let metadata_str = std::str::from_utf8(&packet).unwrap();
-        let metadata: Value = serde_json::from_str(metadata_str).unwrap();
-        assert_eq!(metadata, json!({}));
-
-        let packet = packets.next().unwrap();
-        let content_str = std::str::from_utf8(&packet).unwrap();
-        let content: Value = serde_json::from_str(content_str).unwrap();
-        assert_eq!(content, json!({}));
+        let command = Command::KernelInfo;
+        assert_packets(PacketsTestData {
+            command,
+            expected_header_type: "kernel_info_request",
+            expected_content: json!({}),
+        });
     }
 
     #[test]
     fn test_execute_request_into_packets() {
-        use crate::header::Header;
-        use serde_json::{json, Value};
         use std::collections::HashMap;
 
         let cmd = Command::Execute {
@@ -261,153 +230,71 @@ mod tests {
             allow_stdin: true,
             stop_on_error: false,
         };
-        let auth = FakeAuth::create();
-        let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
-        let packets = wire.into_packets().expect("creating packets");
-
-        let mut packets = packets.into_iter();
-        let packet = packets.next().unwrap();
-        compare_bytestrings!(&packet, &DELIMITER);
-
-        let packet = packets.next().unwrap();
-        compare_bytestrings!(&packet, &expected_signature().as_bytes());
-
-        let packet = packets.next().unwrap();
-        let header_str = std::str::from_utf8(&packet).unwrap();
-        let header: Header = serde_json::from_str(header_str).unwrap();
-
-        assert_eq!(header.msg_type, "execute_request");
-
-        // The rest of the packet should be empty maps
-        let packet = packets.next().unwrap();
-        let parent_header_str = std::str::from_utf8(&packet).unwrap();
-        let parent_header: Value = serde_json::from_str(parent_header_str).unwrap();
-        assert_eq!(parent_header, json!({}));
-
-        let packet = packets.next().unwrap();
-        let metadata_str = std::str::from_utf8(&packet).unwrap();
-        let metadata: Value = serde_json::from_str(metadata_str).unwrap();
-        assert_eq!(metadata, json!({}));
-
-        let packet = packets.next().unwrap();
-        let content_str = std::str::from_utf8(&packet).unwrap();
-        let content: Value = serde_json::from_str(content_str).unwrap();
-        assert_eq!(
-            content,
-            json!({
+        assert_packets(PacketsTestData {
+            command: cmd,
+            expected_header_type: "execute_request",
+            expected_content: json!({
                 "code": "a = 10",
                 "silent": false,
                 "store_history": true,
                 "user_expressions": {},
                 "allow_stdin": true,
                 "stop_on_error": false,
-            })
-        );
+            }),
+        });
     }
 
     #[test]
     fn test_is_complete_into_packets() {
-        use crate::header::Header;
-        use serde_json::{json, Value};
-
         let cmd = Command::IsComplete {
             code: "a = 10".to_string(),
         };
-        let auth = FakeAuth::create();
-        let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
-        let packets = wire.into_packets().expect("creating packets");
-
-        let mut packets = packets.into_iter();
-        let packet = packets.next().unwrap();
-        compare_bytestrings!(&packet, &DELIMITER);
-
-        let packet = packets.next().unwrap();
-        compare_bytestrings!(&packet, &expected_signature().as_bytes());
-
-        let packet = packets.next().unwrap();
-        let header_str = std::str::from_utf8(&packet).unwrap();
-        let header: Header = serde_json::from_str(header_str).unwrap();
-
-        assert_eq!(header.msg_type, "is_complete_request");
-
-        // The rest of the packet should be empty maps
-        let packet = packets.next().unwrap();
-        let parent_header_str = std::str::from_utf8(&packet).unwrap();
-        let parent_header: Value = serde_json::from_str(parent_header_str).unwrap();
-        assert_eq!(parent_header, json!({}));
-
-        let packet = packets.next().unwrap();
-        let metadata_str = std::str::from_utf8(&packet).unwrap();
-        let metadata: Value = serde_json::from_str(metadata_str).unwrap();
-        assert_eq!(metadata, json!({}));
-
-        let packet = packets.next().unwrap();
-        let content_str = std::str::from_utf8(&packet).unwrap();
-        let content: Value = serde_json::from_str(content_str).unwrap();
-        assert_eq!(
-            content,
-            json!({
+        assert_packets(PacketsTestData {
+            command: cmd,
+            expected_header_type: "is_complete_request",
+            expected_content: json!({
                 "code": "a = 10",
-            })
-        );
+            }),
+        });
     }
 
     #[test]
     fn test_shutdown_into_packets() {
-        use crate::header::Header;
-        use serde_json::{json, Value};
-
         let cmd = Command::Shutdown { restart: false };
-        let auth = FakeAuth::create();
-        let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
-        let packets = wire.into_packets().expect("creating packets");
-
-        let mut packets = packets.into_iter();
-        let packet = packets.next().unwrap();
-        compare_bytestrings!(&packet, &DELIMITER);
-
-        let packet = packets.next().unwrap();
-        compare_bytestrings!(&packet, &expected_signature().as_bytes());
-
-        let packet = packets.next().unwrap();
-        let header_str = std::str::from_utf8(&packet).unwrap();
-        let header: Header = serde_json::from_str(header_str).unwrap();
-
-        assert_eq!(header.msg_type, "shutdown_request");
-
-        // The rest of the packet should be empty maps
-        let packet = packets.next().unwrap();
-        let parent_header_str = std::str::from_utf8(&packet).unwrap();
-        let parent_header: Value = serde_json::from_str(parent_header_str).unwrap();
-        assert_eq!(parent_header, json!({}));
-
-        let packet = packets.next().unwrap();
-        let metadata_str = std::str::from_utf8(&packet).unwrap();
-        let metadata: Value = serde_json::from_str(metadata_str).unwrap();
-        assert_eq!(metadata, json!({}));
-
-        let packet = packets.next().unwrap();
-        let content_str = std::str::from_utf8(&packet).unwrap();
-        let content: Value = serde_json::from_str(content_str).unwrap();
-        assert_eq!(
-            content,
-            json!({
+        assert_packets(PacketsTestData {
+            command: cmd,
+            expected_header_type: "shutdown_request",
+            expected_content: json!({
                 "restart": false,
-            })
-        );
+            }),
+        });
     }
 
     #[test]
     fn test_comm_info_packets() {
-        use crate::header::Header;
-        use serde_json::{json, Value};
-
         let cmd = Command::CommInfo { target_name: None };
-        let auth = FakeAuth::create();
-        let wire = cmd.into_wire(auth.clone()).expect("creating wire message");
-        let packets = wire.into_packets().expect("creating packets");
+        assert_packets(PacketsTestData {
+            command: cmd,
+            expected_header_type: "comm_info_request",
+            expected_content: json!({}),
+        });
+    }
 
-        let mut packets = packets.into_iter();
+    fn packets_from_command(command: Command) -> impl Iterator<Item = Part> {
+        let auth = FakeAuth::create();
+        let wire = command
+            .into_wire(auth.clone())
+            .expect("creating wire message");
+        let packets = wire.into_packets().expect("creating packets");
+        packets.into_iter()
+    }
+
+    fn check_packet_preamble(
+        mut packets: impl Iterator<Item = Part>,
+        expected_header_type: &str,
+    ) -> impl Iterator<Item = Part> {
+        use serde_json::json;
+
         let packet = packets.next().unwrap();
         compare_bytestrings!(&packet, &DELIMITER);
 
@@ -418,7 +305,7 @@ mod tests {
         let header_str = std::str::from_utf8(&packet).unwrap();
         let header: Header = serde_json::from_str(header_str).unwrap();
 
-        assert_eq!(header.msg_type, "comm_info_request");
+        assert_eq!(header.msg_type, expected_header_type);
 
         // The rest of the packet should be empty maps
         let packet = packets.next().unwrap();
@@ -430,11 +317,24 @@ mod tests {
         let metadata_str = std::str::from_utf8(&packet).unwrap();
         let metadata: Value = serde_json::from_str(metadata_str).unwrap();
         assert_eq!(metadata, json!({}));
+        packets
+    }
 
+    struct PacketsTestData {
+        command: Command,
+        expected_header_type: &'static str,
+        expected_content: Value,
+    }
+
+    fn assert_packets(testdata: PacketsTestData) {
+        let packets = packets_from_command(testdata.command);
+        let mut packets = check_packet_preamble(packets, testdata.expected_header_type);
+
+        // Check content
         let packet = packets.next().unwrap();
         let content_str = std::str::from_utf8(&packet).unwrap();
         let content: Value = serde_json::from_str(content_str).unwrap();
-        assert_eq!(content, json!({}));
+        assert_eq!(content, testdata.expected_content);
     }
 
 }
