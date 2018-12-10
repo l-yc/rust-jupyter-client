@@ -431,7 +431,8 @@ mod tests {
                 "session": "",
                 "msg_type": "kernel_info_reply",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header
             r#"{
@@ -441,7 +442,8 @@ mod tests {
                 "session": "",
                 "msg_type": "kernel_info_request",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
@@ -465,7 +467,8 @@ mod tests {
                     "nbconvert_exporter": "python"
                 },
                 "help_links": [{"text": "text", "url": "url"}]
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
@@ -513,7 +516,8 @@ mod tests {
                 "session": "",
                 "msg_type": "execute_reply",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header
             r#"{
@@ -523,7 +527,8 @@ mod tests {
                 "session": "",
                 "msg_type": "execute_request",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
@@ -531,7 +536,8 @@ mod tests {
             r#"{
                 "status": "ok",
                 "execution_count": 4
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
@@ -568,7 +574,8 @@ mod tests {
                 "session": "",
                 "msg_type": "status",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header, not relevant
             r#"{
@@ -578,7 +585,8 @@ mod tests {
                 "session": "",
                 "msg_type": "execute_request",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
@@ -586,7 +594,8 @@ mod tests {
             r#"{
                 "status": "ok",
                 "execution_state": "busy"
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
@@ -622,7 +631,8 @@ mod tests {
                 "session": "",
                 "msg_type": "execute_input",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header, not relevant
             r#"{
@@ -632,7 +642,8 @@ mod tests {
                 "session": "",
                 "msg_type": "",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
@@ -641,7 +652,8 @@ mod tests {
                 "status": "ok",
                 "code": "a = 10",
                 "execution_count": 4
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
@@ -678,7 +690,8 @@ mod tests {
                 "session": "",
                 "msg_type": "stream",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header, not relevant
             r#"{
@@ -688,7 +701,8 @@ mod tests {
                 "session": "",
                 "msg_type": "",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
@@ -697,7 +711,8 @@ mod tests {
                 "status": "ok",
                 "name": "stdout",
                 "text": "10"
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
@@ -734,7 +749,8 @@ mod tests {
                 "session": "",
                 "msg_type": "is_complete_reply",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header
             r#"{
@@ -744,14 +760,16 @@ mod tests {
                 "session": "",
                 "msg_type": "is_complete_request",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
                 "status": "complete"
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
@@ -787,7 +805,8 @@ mod tests {
                 "session": "",
                 "msg_type": "is_complete_reply",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header
             r#"{
@@ -797,7 +816,8 @@ mod tests {
                 "session": "",
                 "msg_type": "is_complete_request",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
@@ -805,7 +825,8 @@ mod tests {
             r#"{
                 "status": "incomplete",
                 "indent": "  "
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
@@ -841,7 +862,8 @@ mod tests {
                 "session": "",
                 "msg_type": "shutdown_reply",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header
             r#"{
@@ -851,7 +873,8 @@ mod tests {
                 "session": "",
                 "msg_type": "kernel_info_request",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
@@ -859,7 +882,8 @@ mod tests {
             r#"{
                 "status": "ok",
                 "restart": false
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
@@ -895,7 +919,8 @@ mod tests {
                 "session": "",
                 "msg_type": "comm_info_reply",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header
             r#"{
@@ -905,7 +930,8 @@ mod tests {
                 "session": "",
                 "msg_type": "comm_info_request",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
@@ -917,7 +943,8 @@ mod tests {
                         "target_name": "foobar"
                     }
                 }
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
@@ -955,7 +982,8 @@ mod tests {
                 "session": "",
                 "msg_type": "execute_result",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header
             r#"{
@@ -965,7 +993,8 @@ mod tests {
                 "session": "",
                 "msg_type": "execute_request",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
@@ -976,7 +1005,8 @@ mod tests {
                 },
                 "metadata": {},
                 "execution_count": 46
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();
@@ -1014,7 +1044,8 @@ mod tests {
                 "session": "",
                 "msg_type": "clear_output",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Parent header
             r#"{
@@ -1024,14 +1055,16 @@ mod tests {
                 "session": "",
                 "msg_type": "execute_request",
                 "version": ""
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
             // Metadata
             r#"{}"#.to_string().into_bytes(),
             // Content
             r#"{
                 "wait": false
-            }"#.to_string()
+            }"#
+            .to_string()
             .into_bytes(),
         ];
         let msg = WireMessage::from_raw_response(raw_response, auth.clone()).unwrap();

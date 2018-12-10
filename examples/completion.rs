@@ -17,7 +17,8 @@ fn main() {
 
     def baz(self):
         return 20
-"#.to_string();
+"#
+    .to_string();
     let prep_cmd = Command::Execute {
         code: code,
         silent: false,

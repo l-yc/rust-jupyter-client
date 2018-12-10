@@ -347,8 +347,8 @@ mod tests {
         assert_eq!(
             content,
             json!({
-            "code": "a = 10",
-        })
+                "code": "a = 10",
+            })
         );
     }
 
@@ -392,8 +392,8 @@ mod tests {
         assert_eq!(
             content,
             json!({
-            "restart": false,
-        })
+                "restart": false,
+            })
         );
     }
 

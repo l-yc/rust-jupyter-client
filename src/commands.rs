@@ -110,8 +110,8 @@ pub enum Command {
         hist_access_type: HistoryAccessType,
 
         /** If `hist_access_type` is 'search' and unique is true, do not
-          include duplicated history.  Default is false.
-          */
+        include duplicated history.  Default is false.
+        */
         unique: bool,
     },
     /// Ask the kernel if the current code is complete
