@@ -8,6 +8,7 @@ repository = "https://gitlab.com/srwalker101/rust-jupyter-client"
 readme = "README.md"
 license = "Apache-2.0"
 documentation = "https://docs.rs/jupyter-client"
+edition = "2018"
 
 [dependencies]
 zmq = "0.8.2"

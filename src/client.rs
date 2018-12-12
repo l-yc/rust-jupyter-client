@@ -1,13 +1,13 @@
-use commands::Command;
-use connection_config::ConnectionConfig;
-use errors::Result;
+use crate::commands::Command;
+use crate::connection_config::ConnectionConfig;
+use crate::errors::Result;
+use crate::paths::jupyter_runtime_dir;
+use crate::responses::Response;
+use crate::signatures::HmacSha256;
 use failure::format_err;
 use glob::glob;
 use hmac::Mac;
 use log::{debug, trace};
-use paths::jupyter_runtime_dir;
-use responses::Response;
-use signatures::HmacSha256;
 use std::env::current_dir;
 use std::fs;
 use std::io::Read;
@@ -17,7 +17,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use socket::Socket;
+use crate::socket::Socket;
 
 fn find_connection_file<S>(glob_pattern: S, paths: Option<Vec<PathBuf>>) -> Option<PathBuf>
 where

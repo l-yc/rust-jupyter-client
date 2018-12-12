@@ -7,8 +7,9 @@ These should be constructed, and then sent to the kernel via
 [send-shell-command]: ../struct.Client.html#method.send_shell_command
 [send-control-command]: ../struct.Client.html#method.send_control_command
 */
-use errors::Result;
-use header::Header;
+use crate::errors::Result;
+use crate::header::Header;
+use crate::wire::WireMessage;
 use hmac::Mac;
 use log::trace;
 use serde::{Serialize as SerdeSerialize, Serializer};
@@ -16,7 +17,6 @@ use serde_derive::Serialize;
 use serde_json::json;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use wire::WireMessage;
 
 /** Available commands.
  */

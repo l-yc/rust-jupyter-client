@@ -1,5 +1,5 @@
+use crate::errors::Result;
 use chrono::Utc;
-use errors::Result;
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

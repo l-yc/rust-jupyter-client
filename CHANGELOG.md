@@ -7,8 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 ## [Unreleased]
 
 ### Added
-
 ### Changed
+
+- Switch to Rust 2018 🎉 [#24](https://gitlab.com/srwalker101/rust-jupyter-client/merge_requests/24)
+
 ### Removed
 
 ## [0.1.0] - 2018-12-05
