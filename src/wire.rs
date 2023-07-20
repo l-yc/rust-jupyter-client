@@ -1,3 +1,4 @@
+// This file has been modified from the original by @l-yc
 use crate::errors::Result;
 use crate::header::Header;
 use crate::metadata::Metadata;
@@ -172,6 +173,12 @@ impl<M: Mac + Debug> WireMessage<M> {
                 content: serde_json::from_str(content_str)?,
             })),
             "clear_output" => Ok(Response::IoPub(IoPubResponse::ClearOutput {
+                header,
+                parent_header,
+                metadata,
+                content: serde_json::from_str(content_str)?,
+            })),
+            "display_data" => Ok(Response::IoPub(IoPubResponse::DisplayData { /// (@l-yc)
                 header,
                 parent_header,
                 metadata,

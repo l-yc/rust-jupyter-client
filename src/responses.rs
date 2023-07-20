@@ -1,5 +1,6 @@
 /*! Available responses back from the kernel.
 */
+// This file has been modified from the original by @l-yc
 use crate::header::Header;
 use crate::metadata::Metadata;
 use serde_derive::Deserialize;
@@ -195,6 +196,17 @@ pub enum IoPubResponse {
         /// Main response content.
         content: ClearOutputContent,
     },
+    /// Response when the kernel askes the client to clear it's output. (@l-yc)
+    DisplayData {
+        /// Header from the kernel.
+        header: Header,
+        /// Header sent to the kernel.
+        parent_header: Header,
+        /// Metadata about the response.
+        metadata: Metadata,
+        /// Main response content.
+        content: DisplayDataContent,
+    },
 }
 
 /// Content for a KernelInfo response.
@@ -364,6 +376,24 @@ pub struct ExecuteResultContent {
 pub struct ClearOutputContent {
     /// Wait to clear the output until new output is available.
     pub wait: bool,
+}
+
+/// Response when the kernel asks the client to display some data (@l-yc)
+/// Adapted directly from https://jupyter-protocol.readthedocs.io/en/latest/messaging.html
+#[derive(Deserialize, Debug)]
+pub struct DisplayDataContent {
+    /// The data dict contains key/value pairs, where the keys are MIME
+    /// types and the values are the raw data of the representation in that
+    /// format.
+    pub data: HashMap<String, String>,
+
+    /// Any metadata that describes the data
+    pub metadata: HashMap<String, String>,
+
+    /// Optional transient data introduced in 5.1. Information not to be
+    /// persisted to a notebook or other documents. Intended to live only
+    /// during a live kernel session.
+    pub transient: Option<HashMap<String, String>>,
 }
 
 /// State of the kernel.
