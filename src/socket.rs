@@ -61,7 +61,7 @@ impl Socket {
     }
 
     pub(crate) fn heartbeat(&self) -> Result<()> {
-        self.0.send(b"", 0)?;
+        self.0.send(b"".as_slice(), 0)?;
         let _msg = self.0.recv_msg(0)?;
         Ok(())
     }
